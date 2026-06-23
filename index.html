@@ -266,6 +266,36 @@
 
   .hidden{display:none!important}
 
+  /* 密碼鎖 */
+  #gateOverlay{
+    position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:radial-gradient(circle at 20% 0%, #ffe1d6 0, transparent 45%),
+               radial-gradient(circle at 90% 10%, #d8f3ee 0, transparent 40%), var(--paper);
+  }
+  .gate-card{
+    background:var(--card);border:2px solid var(--line);border-radius:24px;
+    box-shadow:0 16px 50px rgba(214,150,135,.25);padding:30px 26px;width:100%;max-width:330px;text-align:center;
+  }
+  .gate-ghost{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;
+    background:linear-gradient(140deg,#ffb3a0,#ff8c7a);display:grid;place-items:center;
+    box-shadow:0 6px 14px rgba(255,140,122,.4)}
+  .gate-ghost svg{width:42px;height:42px}
+  .gate-card h2{margin:0;font-family:var(--round);color:#ff7a66;font-size:22px;letter-spacing:1px}
+  .gate-card p{margin:4px 0 16px;color:var(--ink-soft);font-size:13.5px;font-family:var(--round)}
+  #gateInput{
+    width:100%;border:2px solid var(--line);border-radius:14px;font:inherit;font-size:18px;text-align:center;
+    letter-spacing:.3em;padding:12px;outline:none;color:var(--ink);
+  }
+  #gateInput:focus{border-color:var(--accent)}
+  .gate-err{color:var(--danger);font-size:13px;min-height:18px;margin-top:8px}
+  .gate-btn{
+    width:100%;margin-top:6px;border:none;border-radius:14px;background:var(--accent);color:#fff;
+    font:inherit;font-weight:700;font-size:16px;padding:13px;cursor:pointer;box-shadow:0 4px 12px rgba(255,140,122,.4);
+  }
+  .gate-btn:hover{background:#ff7a66}
+  .gate-shake{animation:gshake .35s}
+  @keyframes gshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
   /* 小計算機（右側浮動、可拖移、可放大縮小、不擋畫面） */
   .calc-panel{
     position:fixed; right:14px; top:84px; z-index:200;
@@ -346,6 +376,23 @@
 </style>
 </head>
 <body>
+<div id="gateOverlay">
+  <div class="gate-card">
+    <div class="gate-ghost">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M11 21a13 13 0 0 1 26 0v11q0 2-1.6 2-1.2 0-2-1.4-0.8-1.4-2-1.4t-2 1.4q-0.8 1.4-2 1.4t-2-1.4q-0.8-1.4-2-1.4t-2 1.4q-0.8 1.4-2 1.4t-2-1.4q-0.8-1.4-2-1.4-1.2 0-2 1.4-0.8 1.4-2 1.4Q11 34 11 32Z" fill="#fff5ef" stroke="#e07a64" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="19" cy="22" r="1.8" fill="#5b4a44"/><circle cx="29" cy="22" r="1.8" fill="#5b4a44"/>
+        <ellipse cx="15.4" cy="26" rx="2" ry="1.3" fill="#ffb0a0"/><ellipse cx="32.6" cy="26" rx="2" ry="1.3" fill="#ffb0a0"/>
+        <ellipse cx="24" cy="27" rx="2.2" ry="2.6" fill="#5b4a44"/>
+      </svg>
+    </div>
+    <h2>頭腦備份站</h2>
+    <p>請輸入密碼</p>
+    <input id="gateInput" type="password" inputmode="numeric" placeholder="密碼" autocomplete="off">
+    <div id="gateErr" class="gate-err"></div>
+    <button id="gateBtn" class="gate-btn">進入</button>
+  </div>
+</div>
 <div class="wrap">
 
   <!-- ===== HOME ===== -->
@@ -529,6 +576,8 @@
 (function(){
   "use strict";
   var KEY = "shixiang_bu_v1";
+  /* === 進入密碼（簡單鎖，會出現在原始碼，非高安全）。改成你要的；留空 "" 就不鎖 === */
+  var GATE_PASSWORD = "n4ru04dk4";
   var LASTKEY = "shixiang_last_topic";
   var COLORS = ["#e07a5f","#e9a23b","#7fa05a","#4d9d8f","#5b8fb0","#8a7fb0","#c2748f","#9a8478"];
   var ICONS = ["📌","⭐","💰","💴","💵","💸","🪙","💳","🧾","🧮","📊","📈","📉","🏦","💹","⚖️","📒","🗂️","💼","📅","🛒","💊","🎓","✈️","🍴","🐱","🎁","📞","🔑","❤️","📝","🏥","🚗","🌱"];
@@ -1519,6 +1568,30 @@
     bar.addEventListener("pointerup", endDrag);
     bar.addEventListener("pointercancel", endDrag);
   }
+
+  /* ---------- 密碼鎖 ---------- */
+  function unlockGate(){ var g=$("gateOverlay"); if(g) g.style.display="none"; }
+  function initGate(){
+    var g=$("gateOverlay");
+    if(!g) return;
+    if(!GATE_PASSWORD || sessionStorage.getItem("gateOk")==="1"){ unlockGate(); return; }
+    function tryEnter(){
+      var v=$("gateInput").value;
+      if(v===GATE_PASSWORD){
+        try{ sessionStorage.setItem("gateOk","1"); }catch(e){}
+        unlockGate();
+      }else{
+        var err=$("gateErr"); err.textContent="密碼不對，再試一次";
+        var card=g.querySelector(".gate-card");
+        card.classList.remove("gate-shake"); void card.offsetWidth; card.classList.add("gate-shake");
+        $("gateInput").value=""; $("gateInput").focus();
+      }
+    }
+    $("gateBtn").addEventListener("click", tryEnter);
+    $("gateInput").addEventListener("keydown", function(e){ if(e.key==="Enter") tryEnter(); });
+    setTimeout(function(){ try{ $("gateInput").focus(); }catch(e){} }, 100);
+  }
+  initGate();
 
   /* ---------- events ---------- */
   $("editTopicBtn").addEventListener("click", function(){ openTopicModal("edit"); });
