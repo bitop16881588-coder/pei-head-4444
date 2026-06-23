@@ -43,7 +43,7 @@
     -webkit-font-smoothing:antialiased;
     padding-bottom:env(safe-area-inset-bottom);
   }
-  .wrap{max-width:860px;margin:0 auto;padding:22px 18px 80px}
+  .wrap{max-width:1200px;margin:0 auto;padding:20px 12px 80px}
 
   /* header */
   header.app{display:flex;align-items:center;gap:13px;margin-bottom:22px}
@@ -189,13 +189,23 @@
   .sheet-search input{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 2px}
   .sheet-search .ss-clear{border:none;background:transparent;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:4px 6px;border-radius:8px}
   .sheet-search .ss-clear:hover{background:var(--accent-soft);color:var(--accent)}
-  .sheet-scroll{overflow:auto;max-height:80vh;border-radius:12px;border:1px solid var(--line)}
-  table.sheet-tbl{border-collapse:collapse;width:100%;font-size:13px}
+  .sheet-scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+  table.sheet-tbl{border-collapse:collapse;width:100%;font-size:17px}
   table.sheet-tbl th,table.sheet-tbl td{
-    border:1px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap;
+    border:1px solid #d9d2c6;padding:11px 14px;text-align:center;white-space:nowrap;
   }
-  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;z-index:2;font-family:var(--round);box-shadow:0 1px 0 var(--line)}
+  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;z-index:2;font-family:var(--round);font-size:16px;font-weight:700;box-shadow:0 1px 0 #d9d2c6}
+  table.sheet-tbl thead th.g-in{background:#d9ead3;color:#274e13}
+  table.sheet-tbl thead th.g-out{background:#cfe2e6;color:#0c343d}
   table.sheet-tbl tbody tr:nth-child(even){background:#fff8f5}
+  td.amt{font-variant-numeric:tabular-nums;font-weight:600}
+  td.amt span{margin-right:4px}
+  .copy-btn{
+    border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;
+    padding:3px 5px;border-radius:8px;opacity:.5;vertical-align:middle;transition:.12s;
+  }
+  .copy-btn:hover{opacity:1;background:var(--accent-soft)}
+  .copy-btn.copied{opacity:1;color:var(--accent);font-weight:700}
   .sheet-err{color:var(--danger);font-size:13px;padding:6px 2px;line-height:1.5}
   .sheet-empty{color:var(--ink-soft);font-size:13px;padding:8px 2px}
   .sheet-more{font-size:12px;color:var(--ink-soft);padding:6px 2px 0}
@@ -253,8 +263,81 @@
   .del-topic button.confirm{background:var(--danger);color:#fff}
 
   .hidden{display:none!important}
+
+  /* 小計算機（右側浮動、可拖移、可放大縮小、不擋畫面） */
+  .calc-panel{
+    position:fixed; right:14px; top:84px; z-index:200;
+    width:17em; font-size:13px;
+    background:var(--paper); border:2px solid var(--line); border-radius:1.2em;
+    box-shadow:0 12px 40px rgba(91,74,68,.28); padding:.7em;
+    user-select:none; touch-action:none;
+  }
+  .calc-bar{display:flex;align-items:center;gap:.3em;margin-bottom:.5em;cursor:move}
+  .calc-grip{flex:1;font-weight:700;font-size:1em;font-family:var(--round);color:var(--accent);white-space:nowrap}
+  .calc-mini{
+    border:none;background:#f3ece2;color:var(--ink-soft);font:inherit;font-size:.85em;font-weight:700;
+    padding:.35em .6em;border-radius:.6em;cursor:pointer;line-height:1;
+  }
+  .calc-mini:hover{background:var(--accent-soft);color:var(--accent)}
+  .calc-display{
+    background:#fff;border:2px solid var(--line);border-radius:.9em;padding:.5em .7em;margin-bottom:.55em;
+    text-align:right;min-height:3em;display:flex;flex-direction:column;justify-content:center;
+  }
+  .calc-expr{font-size:.85em;color:var(--ink-soft);min-height:1.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calc-now{font-size:1.9em;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.45em}
+  .calc-key{
+    border:none;border-radius:.7em;padding:.7em 0;font:inherit;font-size:1.15em;font-weight:600;cursor:pointer;
+    background:#fff;color:var(--ink);box-shadow:var(--shadow);transition:transform .08s,background .12s;
+  }
+  .calc-key:active{transform:scale(.94)}
+  .calc-key.fn{background:#f3ece2;color:var(--ink-soft)}
+  .calc-key.op{background:var(--accent-soft);color:var(--accent)}
+  .calc-key.eq{background:var(--accent);color:#fff;box-shadow:0 4px 10px rgba(255,140,122,.4)}
+  .calc-key.copy{background:#e3f0ed;color:#1f7a6d}
+  .calc-key.copy.copied{background:var(--accent);color:#fff}
+  .calc-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.45em;margin-top:.5em}
+  .calc-note-row{display:flex;gap:.4em;align-items:center;margin-top:.55em}
+  .calc-note{
+    flex:1;border:2px solid var(--line);border-radius:.7em;
+    font:inherit;font-size:.95em;color:var(--ink);padding:.55em .7em;outline:none;background:#fff;min-width:0;
+  }
+  .calc-note:focus{border-color:var(--accent)}
+  .note-hide{border:none;background:#f3ece2;color:var(--ink-soft);border-radius:.6em;padding:.55em .65em;cursor:pointer;font-size:.85em;line-height:1}
+  .note-hide:hover{background:#ffe2e2;color:var(--danger)}
+  .note-show{
+    width:100%;margin-top:.55em;border:1.5px dashed var(--line);background:transparent;color:var(--ink-soft);
+    border-radius:.7em;padding:.55em;font:inherit;font-size:.9em;cursor:pointer;
+  }
+  .note-show:hover{border-color:var(--accent);color:var(--accent)}
+  .calc-act{
+    border:none;border-radius:.7em;padding:.6em .2em;font:inherit;font-size:.9em;font-weight:600;cursor:pointer;
+    background:#f3ece2;color:var(--ink);box-shadow:var(--shadow);white-space:nowrap;transition:.1s;
+  }
+  .calc-act:hover{background:var(--accent-soft);color:var(--accent)}
+  .calc-act:active{transform:scale(.95)}
+  .calc-act.ok{background:var(--accent);color:#fff}
+  .calc-tape{margin-top:.55em;border-top:1px dashed var(--line);padding-top:.5em}
+  .calc-tape-head{display:flex;align-items:center;gap:.4em;margin-bottom:.4em;font-size:.95em}
+  .calc-tape-head .ttl{flex:1;font-weight:700;color:var(--ink-soft)}
+  .calc-tape-list{max-height:9em;overflow:auto;display:flex;flex-direction:column;gap:.25em}
+  .tape-row{display:flex;align-items:center;gap:.4em;font-size:.95em;font-variant-numeric:tabular-nums}
+  .tape-row .tnote{flex:1;text-align:left;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:normal}
+  .tape-row .tv{white-space:nowrap}
+  .tape-x{border:none;background:transparent;color:#cbb7ad;cursor:pointer;font-size:.85em;padding:.1em .35em;border-radius:.4em}
+  .tape-x:hover{background:#ffe2e2;color:var(--danger)}
+  .tape-total{display:flex;align-items:center;gap:.4em;margin-top:.45em;padding-top:.4em;border-top:1px solid var(--line);font-weight:700}
+  .tape-total .lbl{color:var(--ink-soft);font-weight:500}
+  .tape-total .tt{flex:1;text-align:right;color:var(--accent);font-size:1.1em;font-variant-numeric:tabular-nums}
+  .mini-toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:#fff;font-size:13.5px;padding:9px 16px;border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:.25s;z-index:300;pointer-events:none;
+  }
+  .mini-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
   @media(max-width:480px){
-    .wrap{padding:18px 14px 70px}
+    .wrap{padding:16px 8px 70px}
     .bm{max-width:150px}
   }
 </style>
@@ -280,6 +363,7 @@
         <p>什麼資料都吃，重點自動吐出來</p>
       </div>
       <div class="spacer"></div>
+      <button class="ghost-btn" id="calcBtn" title="小計算機">🧮</button>
       <button class="ghost-btn" id="gAuthBtn">Google</button>
       <button class="ghost-btn" id="exportBtn">匯出</button>
       <button class="ghost-btn" id="importBtn">匯入</button>
@@ -373,6 +457,53 @@
 
 <input type="file" id="importFile" accept="application/json" class="hidden">
 
+<!-- ===== 小計算機（右側浮動面板） ===== -->
+<div id="calcPanel" class="calc-panel hidden">
+  <div class="calc-bar" id="calcBar">
+    <span class="calc-grip">🧮 計算機</span>
+    <button class="calc-mini" data-z="out" title="縮小">A−</button>
+    <button class="calc-mini" data-z="in" title="放大">A＋</button>
+    <button class="calc-mini" id="calcClose" title="關閉">✕</button>
+  </div>
+  <div class="calc-display">
+    <div class="calc-expr" id="calcExpr"></div>
+    <div class="calc-now" id="calcNow">0</div>
+  </div>
+  <div class="calc-grid">
+    <button class="calc-key fn" data-k="C">C</button>
+    <button class="calc-key fn" data-k="back">⌫</button>
+    <button class="calc-key fn" data-k="%">%</button>
+    <button class="calc-key op" data-k="/">÷</button>
+    <button class="calc-key" data-k="7">7</button>
+    <button class="calc-key" data-k="8">8</button>
+    <button class="calc-key" data-k="9">9</button>
+    <button class="calc-key op" data-k="*">×</button>
+    <button class="calc-key" data-k="4">4</button>
+    <button class="calc-key" data-k="5">5</button>
+    <button class="calc-key" data-k="6">6</button>
+    <button class="calc-key op" data-k="-">−</button>
+    <button class="calc-key" data-k="1">1</button>
+    <button class="calc-key" data-k="2">2</button>
+    <button class="calc-key" data-k="3">3</button>
+    <button class="calc-key op" data-k="+">＋</button>
+    <button class="calc-key" data-k="0">0</button>
+    <button class="calc-key" data-k=".">.</button>
+    <button class="calc-key copy" data-k="copy">📋</button>
+    <button class="calc-key eq" data-k="=">＝</button>
+  </div>
+  <div class="calc-note-row" id="calcNoteRow">
+    <input id="calcNote" class="calc-note" type="text" placeholder="備註（如三方名稱，可留空）" maxlength="40">
+    <button class="note-hide" id="calcNoteHide" type="button" title="取消備註">✕</button>
+  </div>
+  <button class="note-show hidden" id="calcNoteShow" type="button">＋ 加備註</button>
+  <div class="calc-actions">
+    <button class="calc-act" data-a="paste">📥 貼上</button>
+    <button class="calc-act" data-a="tally">Σ 記一筆</button>
+    <button class="calc-act" data-a="toItem">＋ 存主題</button>
+  </div>
+  <div class="calc-tape hidden" id="calcTape"></div>
+</div>
+
 <script>
 (function(){
   "use strict";
@@ -383,6 +514,39 @@
 
   /* 第一個主題固定連動這份試算表（留空字串 "" 即取消固定）*/
   var PINNED_FIRST_SHEET = "https://docs.google.com/spreadsheets/d/1zh8eNjaZGaucZj0l_Ho_ePtHwmkEv9OhBQk6Z89o1pE/edit?gid=1281810974#gid=1281810974";
+  var PINNED_FIRST_NAME = "加减";   // 第一個主題固定名稱（留空 "" 即不固定）
+
+  /* 第一個主題的「內建快照」：沒登入時先顯示這份，登入後自動換成最新即時資料 */
+  var PINNED_FIRST_SEED = [
+    ["内部 三方","内部 金额","外部 三方","外部 金额"],
+    ["JJ卡转卡","8320.322","JJ卡转卡","55522.637"],
+    ["JJ支付宝","26908.643","JJ支付宝","15346.649"],
+    ["JJ微信","375.858","WF支付宝","0.000"],
+    ["JJ数字人民币","0.000","",""],
+    ["VCOTC支付宝","2925.000","",""],
+    ["XQ小额卡卡","3125.17","",""],
+    ["红喜鹊卡转卡","0.000","",""],
+    ["红喜鹊支转支","0.00","",""],
+    ["ZCPAY支付宝","2110.455","ZCPAY支付宝","0.000"],
+    ["码上支付宝（新人层）","7395.810","",""],
+    ["码上纯代收","0.000","",""],
+    ["码上小额卡卡","481.000","",""],
+    ["新宝支付宝","3403.922","新宝支付宝","487.974"],
+    ["新宝支付宝(小额)","0.000","",""],
+    ["新宝银联","0.000","",""],
+    ["和奕","4513.000","和奕","7644.000"],
+    ["和奕支付宝","5850.818","",""],
+    ["全通支付宝","2959.020","全通支付宝","12039.150"],
+    ["GOSM支付宝","4261.868","",""],
+    ["GOSM微信","488.070","",""],
+    ["乐支付宝","1336.525","",""],
+    ["onepay数字人民币","0.000","",""],
+    ["onepay银联扫码","0.000","",""],
+    ["onepay小荷包","0.000","",""],
+    ["宝诺原生支付宝H5","0.000","",""],
+    ["HCPAY","0.000","",""],
+    ["XPAY支付宝","0.000","",""]
+  ];
 
   /* ===== 你的 Google OAuth 設定（私人試算表連動用）=====
      1) 去 Google Cloud Console 啟用「Google Sheets API」
@@ -422,6 +586,10 @@
             if(!t.color) t.color = COLORS[0];
           });
           if(PINNED_FIRST_SHEET && d.topics[0]) d.topics[0].sheetUrl = PINNED_FIRST_SHEET;
+          if(PINNED_FIRST_NAME && d.topics[0]) d.topics[0].name = PINNED_FIRST_NAME;
+          if(PINNED_FIRST_SEED && d.topics[0] && (!d.topics[0].sheetCache || d.topics[0].sheetCache.seed)){
+            d.topics[0].sheetCache = { rows: PINNED_FIRST_SEED, at: Date.now(), seed: true };
+          }
           return d;
         }
       }
@@ -790,12 +958,33 @@
     var totalData=rows.length>0?rows.length-1:0;
     var shownBody=body.slice(0,MAX);
     var cols=0; [head].concat(shownBody).forEach(function(r){ if(r.length>cols) cols=r.length; });
+    // 哪些欄要加複製鈕：金額、三方（掃描前兩列表頭，兼容合併標題）
+    var copyCol={};
+    var hdrRows=[rows[0]||[], rows[1]||[]];
+    for(var c=0;c<cols;c++){
+      for(var hr=0;hr<hdrRows.length;hr++){
+        var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
+        if(/金[额額]/.test(hd) || /三方/.test(hd)){ copyCol[c]=true; break; }
+      }
+    }
     var h='<div class="sheet-scroll"><table class="sheet-tbl"><thead><tr>';
-    for(var k=0;k<cols;k++) h+='<th>'+esc(head[k]!=null?head[k]:"")+'</th>';
+    for(var k=0;k<cols;k++){
+      var ht=String(head[k]!=null?head[k]:"");
+      var thc = /[内內]部/.test(ht) ? ' class="g-in"' : (/外部/.test(ht) ? ' class="g-out"' : '');
+      h+='<th'+thc+'>'+esc(ht)+'</th>';
+    }
     h+='</tr></thead><tbody>';
     for(var r=0;r<shownBody.length;r++){
       h+='<tr>';
-      for(var k2=0;k2<cols;k2++) h+='<td>'+esc(shownBody[r][k2]!=null?shownBody[r][k2]:"")+'</td>';
+      for(var k2=0;k2<cols;k2++){
+        var val=shownBody[r][k2]!=null?shownBody[r][k2]:"";
+        if(copyCol[k2] && String(val).trim()!==""){
+          h+='<td class="amt"><span>'+esc(val)+'</span>'
+           + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+        }else{
+          h+='<td>'+esc(val)+'</td>';
+        }
+      }
       h+='</tr>';
     }
     h+='</tbody></table></div>';
@@ -807,13 +996,38 @@
     var d=new Date(ts), p=function(n){return(n<10?"0":"")+n;};
     return p(d.getHours())+":"+p(d.getMinutes());
   }
+  function fallbackCopy(txt){
+    var ta=document.createElement("textarea");
+    ta.value=txt; ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  function copyText(txt, btn){
+    var orig = btn ? btn.textContent : null;
+    function done(){
+      if(!btn) return;
+      btn.classList.add("copied"); btn.textContent="✓";
+      setTimeout(function(){ btn.classList.remove("copied"); btn.textContent=orig; }, 1000);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, function(){ fallbackCopy(txt); done(); });
+    }else{ fallbackCopy(txt); done(); }
+  }
+  function onCopyClick(e){
+    var b=e.target.closest ? e.target.closest(".copy-btn") : null;
+    if(!b) return;
+    e.stopPropagation();
+    copyText(b.getAttribute("data-copy")||"", b);
+  }
   function renderSheetBlock(t){
     var box=$("sheetBlock");
     if(!t || !t.sheetUrl){ box.classList.add("hidden"); box.innerHTML=""; return; }
     box.classList.remove("hidden");
     var st=sheetSync[t.id]||{};
     var meta = st.loading ? "更新中…"
-             : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取");
+             : (t.sheetCache && t.sheetCache.seed ? "內建快照 · 登入後更新"
+             : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取"));
     var hasData = t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
     var fval = sheetFilters[t.id]||"";
     var h='<div class="sheet-bar"><span class="sheet-title">📊 連動試算表</span>'
@@ -851,6 +1065,8 @@
         var el=$("sheetFilter"); el.setSelectionRange(el.value.length, el.value.length); }
       if(!fi.value && cl){ renderSheetBlock(t); $("sheetFilter").focus(); }
     });
+    var wrapC=$("sheetTableWrap");
+    if(wrapC) wrapC.addEventListener("click", onCopyClick);
     var fc=$("sheetFilterClear");
     if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
   }
@@ -1009,6 +1225,176 @@
     r.readAsText(file);
   }
 
+  /* ---------- 小計算機 ---------- */
+  var calc = { now:"0", acc:null, op:null, waiting:false, expr:"" };
+  function calcRender(){
+    var n=$("calcNow"), x=$("calcExpr");
+    if(n) n.textContent = calc.now;
+    if(x) x.textContent = calc.expr;
+  }
+  function calcFmt(n){
+    if(!isFinite(n)) return "Error";
+    return String(Math.round((n+Number.EPSILON)*1e10)/1e10);
+  }
+  function calcSym(op){ return op==="*"?"×":op==="/"?"÷":op==="-"?"−":"＋"; }
+  function calcApply(a,op,b){
+    switch(op){ case "+":return a+b; case "-":return a-b; case "*":return a*b; case "/":return b===0?NaN:a/b; }
+    return b;
+  }
+  function calcKey(k){
+    if(/^[0-9]$/.test(k)){
+      if(calc.waiting){ calc.now=k; calc.waiting=false; }
+      else calc.now = (calc.now==="0") ? k : calc.now+k;
+    }else if(k==="."){
+      if(calc.waiting){ calc.now="0."; calc.waiting=false; }
+      else if(calc.now.indexOf(".")===-1) calc.now+=".";
+    }else if(k==="+"||k==="-"||k==="*"||k==="/"){
+      var cur=parseFloat(calc.now);
+      if(calc.op!==null && !calc.waiting){ calc.acc=calcApply(calc.acc, calc.op, cur); calc.now=calcFmt(calc.acc); }
+      else calc.acc=cur;
+      calc.op=k; calc.waiting=true;
+      calc.expr=calcFmt(calc.acc)+" "+calcSym(k);
+    }else if(k==="="){
+      if(calc.op===null) return;
+      var c2=parseFloat(calc.now);
+      calc.expr=calcFmt(calc.acc)+" "+calcSym(calc.op)+" "+calcFmt(c2)+" =";
+      calc.acc=calcApply(calc.acc, calc.op, c2); calc.now=calcFmt(calc.acc);
+      calc.op=null; calc.waiting=true;
+    }else if(k==="C"){
+      calc.now="0"; calc.acc=null; calc.op=null; calc.waiting=false; calc.expr="";
+    }else if(k==="back"){
+      if(!calc.waiting){ calc.now = calc.now.length>1 ? calc.now.slice(0,-1) : "0"; if(calc.now==="-"||calc.now==="") calc.now="0"; }
+    }else if(k==="%"){
+      var p=parseFloat(calc.now);
+      calc.now = (calc.op!==null && calc.acc!=null) ? calcFmt(calc.acc*p/100) : calcFmt(p/100);
+    }else if(k==="copy"){
+      var cb=document.querySelector(".calc-key.copy");
+      copyText(calc.now, cb);
+      return;
+    }
+    calcRender();
+  }
+  var calcScale = 13;
+  function applyCalcScale(){ var p=$("calcPanel"); if(p) p.style.fontSize=calcScale+"px"; }
+  function calcZoom(dir){
+    calcScale = Math.max(10, Math.min(24, calcScale + (dir==="in"?2:-2)));
+    applyCalcScale();
+    try{ localStorage.setItem("calcScale", String(calcScale)); }catch(e){}
+  }
+  function openCalc(){
+    var p=$("calcPanel");
+    p.classList.remove("hidden");
+    calcRender();
+  }
+  function closeCalc(){ $("calcPanel").classList.add("hidden"); }
+
+  /* ---------- 計算機進階：貼上 / 加總 / 存主題 ---------- */
+  var tally = [];
+  var noteOn = true;
+  function applyNoteVis(){
+    var row=$("calcNoteRow"), show=$("calcNoteShow");
+    if(!row||!show) return;
+    if(noteOn){ row.classList.remove("hidden"); show.classList.add("hidden"); }
+    else { row.classList.add("hidden"); show.classList.remove("hidden"); var n=$("calcNote"); if(n) n.value=""; }
+  }
+  function setNoteOn(v){ noteOn=v; try{ localStorage.setItem("calcNoteOn", v?"1":"0"); }catch(e){} applyNoteVis(); }
+  function loadTally(){
+    try{
+      var a=JSON.parse(localStorage.getItem("calcTally")||"[]");
+      if(Array.isArray(a)) tally=a.map(function(x){
+        return (x && typeof x==="object") ? {v:+x.v||0, note:String(x.note||"")} : {v:+x||0, note:""};
+      });
+    }catch(e){}
+  }
+  function saveTally(){ try{ localStorage.setItem("calcTally", JSON.stringify(tally)); }catch(e){} }
+  function tallySum(){ var s=tally.reduce(function(a,b){return a+(+b.v||0);},0); return Math.round((s+Number.EPSILON)*1e10)/1e10; }
+  function toast(msg){
+    var el=document.createElement("div"); el.className="mini-toast"; el.textContent=msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add("show"); });
+    setTimeout(function(){ el.classList.remove("show"); setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },300); }, 1400);
+  }
+  function renderTape(){
+    var box=$("calcTape"); if(!box) return;
+    if(!tally.length){ box.classList.add("hidden"); box.innerHTML=""; return; }
+    box.classList.remove("hidden");
+    var h='<div class="calc-tape-head"><span class="ttl">明細 '+tally.length+' 筆</span>'
+        + '<button class="calc-mini" data-t="copyall">複製清單</button>'
+        + '<button class="calc-mini" data-t="clear">清空</button></div>';
+    h+='<div class="calc-tape-list">';
+    tally.forEach(function(e,i){
+      h+='<div class="tape-row"><span class="tnote">'+esc(e.note||"")+'</span>'
+       + '<span class="tv">'+esc(String(e.v))+'</span>'
+       + '<button class="tape-x" data-i="'+i+'" title="刪除">✕</button></div>';
+    });
+    h+='</div>';
+    h+='<div class="tape-total"><span class="lbl">合計</span><span class="tt">'+esc(String(tallySum()))+'</span>'
+     + '<button class="calc-mini" data-t="copytotal" title="複製合計">📋</button></div>';
+    box.innerHTML=h;
+  }
+  function tallyAdd(){
+    var v=parseFloat(calc.now);
+    if(!isFinite(v)) return;
+    var ne=$("calcNote"), note=(noteOn && ne)?ne.value.trim():"";
+    tally.push({ v:Math.round((v+Number.EPSILON)*1e10)/1e10, note:note });
+    if(ne) ne.value="";
+    saveTally(); renderTape(); calc.waiting=true;
+    toast("已記一筆，合計 "+tallySum());
+  }
+  function setCalcNum(s){
+    var num=parseFloat(String(s).replace(/[^0-9.\-]/g,""));
+    if(isFinite(num)){ calc.now=String(num); calc.waiting=false; calcRender(); return true; }
+    return false;
+  }
+  function calcPaste(){
+    if(navigator.clipboard && navigator.clipboard.readText){
+      navigator.clipboard.readText().then(function(s){
+        if(!setCalcNum(s)) toast("剪貼簿沒有可用的數字");
+      }, function(){ toast("讀不到剪貼簿，請改用 Ctrl+V 貼上"); });
+    }else toast("請改用 Ctrl+V 貼上");
+  }
+  function calcToItem(){
+    if(!curTopic){ toast("先點一個主題"); return; }
+    var t=topicById(curTopic);
+    t.items.push({ id:uid(), type:"text", title:calc.now, note:"", done:false });
+    save(); renderHome();
+    toast("已存入「"+t.name+"」");
+  }
+  function initCalcUI(){
+    try{ var s=parseInt(localStorage.getItem("calcScale"),10); if(s) calcScale=s; }catch(e){}
+    applyCalcScale();
+    // 還原上次位置
+    try{
+      var pos=JSON.parse(localStorage.getItem("calcPos")||"null");
+      if(pos && typeof pos.left==="number"){
+        var p=$("calcPanel"); p.style.left=pos.left+"px"; p.style.top=pos.top+"px"; p.style.right="auto";
+      }
+    }catch(e){}
+    // 拖移
+    var panel=$("calcPanel"), bar=$("calcBar"), dragging=false, dx=0, dy=0;
+    bar.addEventListener("pointerdown", function(e){
+      if(e.target.closest(".calc-mini")) return;
+      dragging=true;
+      var r=panel.getBoundingClientRect();
+      dx=e.clientX-r.left; dy=e.clientY-r.top;
+      panel.style.right="auto"; panel.style.left=r.left+"px"; panel.style.top=r.top+"px";
+      try{ bar.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    bar.addEventListener("pointermove", function(e){
+      if(!dragging) return;
+      var x=e.clientX-dx, y=e.clientY-dy;
+      var maxX=window.innerWidth-panel.offsetWidth-4, maxY=window.innerHeight-panel.offsetHeight-4;
+      x=Math.max(4,Math.min(x,maxX)); y=Math.max(4,Math.min(y,maxY));
+      panel.style.left=x+"px"; panel.style.top=y+"px";
+    });
+    function endDrag(){
+      if(!dragging) return; dragging=false;
+      try{ localStorage.setItem("calcPos", JSON.stringify({left:parseInt(panel.style.left,10), top:parseInt(panel.style.top,10)})); }catch(e){}
+    }
+    bar.addEventListener("pointerup", endDrag);
+    bar.addEventListener("pointercancel", endDrag);
+  }
+
   /* ---------- events ---------- */
   $("editTopicBtn").addEventListener("click", function(){ openTopicModal("edit"); });
   $("topicCancel").addEventListener("click", closeTopicModal);
@@ -1037,6 +1423,68 @@
   $("gAuthBtn").addEventListener("click", function(){
     if(gToken){ if(confirm("要登出 Google 嗎？")) gSignOut(); }
     else gConnect();
+  });
+
+  // 計算機
+  $("calcBtn").addEventListener("click", openCalc);
+  $("calcClose").addEventListener("click", closeCalc);
+  document.querySelector(".calc-grid").addEventListener("click", function(e){
+    var b=e.target.closest ? e.target.closest(".calc-key") : null;
+    if(b) calcKey(b.getAttribute("data-k"));
+  });
+  $("calcBar").addEventListener("click", function(e){
+    var z=e.target.closest ? e.target.closest("[data-z]") : null;
+    if(z) calcZoom(z.getAttribute("data-z"));
+  });
+  document.querySelector(".calc-actions").addEventListener("click", function(e){
+    var b=e.target.closest ? e.target.closest("[data-a]") : null;
+    if(!b) return;
+    var a=b.getAttribute("data-a");
+    if(a==="paste") calcPaste();
+    else if(a==="tally") tallyAdd();
+    else if(a==="toItem") calcToItem();
+  });
+  $("calcTape").addEventListener("click", function(e){
+    var x=e.target.closest ? e.target.closest(".tape-x") : null;
+    if(x){ tally.splice(parseInt(x.getAttribute("data-i"),10),1); saveTally(); renderTape(); return; }
+    var t=e.target.closest ? e.target.closest("[data-t]") : null;
+    if(!t) return;
+    var a=t.getAttribute("data-t");
+    if(a==="clear"){ tally=[]; saveTally(); renderTape(); }
+    else if(a==="copytotal"){ copyText(String(tallySum()), t); }
+    else if(a==="copyall"){ copyText(tally.map(function(e){ return e.note ? (e.note+"\t"+e.v) : String(e.v); }).join("\n"), t); }
+  });
+  loadTally(); renderTape();
+  $("calcNoteHide").addEventListener("click", function(){ setNoteOn(false); });
+  $("calcNoteShow").addEventListener("click", function(){ setNoteOn(true); var n=$("calcNote"); if(n) n.focus(); });
+  try{ noteOn = localStorage.getItem("calcNoteOn")!=="0"; }catch(e){}
+  applyNoteVis();
+  // Ctrl+V / 長按貼上：把剪貼簿的數字貼進計算機
+  document.addEventListener("paste", function(e){
+    if($("calcPanel").classList.contains("hidden")) return;
+    if(e.target && e.target.matches && e.target.matches("input,textarea")) return; // 備註欄正常貼上
+    var cd=e.clipboardData||window.clipboardData;
+    var txt=cd?cd.getData("text"):"";
+    if(txt && setCalcNum(txt)){ e.preventDefault(); toast("已貼上 "+calc.now); }
+  });
+  initCalcUI();
+  document.addEventListener("keydown", function(e){
+    if($("calcPanel").classList.contains("hidden")) return;
+    if(e.target && e.target.matches && e.target.matches("input,textarea")) return; // 打字時不攔截
+    var k=e.key;
+    if(e.ctrlKey || e.metaKey){            // Ctrl/⌘ 組合
+      if(k==="c"||k==="C"){ e.preventDefault(); copyText(calc.now, document.querySelector(".calc-key.copy")); toast("已複製 "+calc.now); }
+      return;                              // Ctrl+V 等交給瀏覽器/paste 事件
+    }
+    if(/^[0-9]$/.test(k)) calcKey(k);
+    else if(k===".") calcKey(".");
+    else if(k==="+"||k==="-"||k==="*"||k==="/") calcKey(k);
+    else if(k==="Enter"||k==="="){ calcKey("="); }
+    else if(k==="Backspace"){ calcKey("back"); }
+    else if(k==="Escape"){ closeCalc(); }
+    else if(k==="c"||k==="C"){ calcKey("C"); }
+    else return;
+    e.preventDefault();
   });
 
   // tap backdrop to close
