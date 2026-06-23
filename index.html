@@ -537,10 +537,9 @@
   var PINNED_FIRST_SHEET = "https://docs.google.com/spreadsheets/d/1zh8eNjaZGaucZj0l_Ho_ePtHwmkEv9OhBQk6Z89o1pE/edit?gid=1281810974#gid=1281810974";
   var PINNED_FIRST_NAME = "加减";   // 第一個主題固定名稱（留空 "" 即不固定）
 
-  /* 資料2：固定一個叫「資料2」的主題並連動這份試算表（沒有就自動建立） */
-  var PINNED_2_NAME = "資料2";
-  var PINNED_2_SHEET = "https://docs.google.com/spreadsheets/d/1XMwpdQ1D8ENk7aA5BHTDVlNlkoSTR4KnKIDvsqnhyfI/edit?usp=sharing";
-  var PINNED_2_TAB = "四方『内外部』NEW";   // 指定要讀的分頁名稱（留空 "" 就讀第一個分頁）
+  /* 「开关」(原資料2)：永遠不連動，保留已抓到的內容當固定資料 */
+  var SWITCH_NAME = "开关";
+  var SWITCH_OLDNAMES = ["資料2","资料2"];
 
   /* 第一個主題的「內建快照」：沒登入時先顯示這份，登入後自動換成最新即時資料 */
   var PINNED_FIRST_SEED = [
@@ -613,12 +612,14 @@
           });
           if(PINNED_FIRST_SHEET && d.topics[0]) d.topics[0].sheetUrl = PINNED_FIRST_SHEET;
           if(PINNED_FIRST_NAME && d.topics[0]) d.topics[0].name = PINNED_FIRST_NAME;
-          if(PINNED_2_NAME && PINNED_2_SHEET){
-            var t2=null;
-            for(var qi=0;qi<d.topics.length;qi++){ if(d.topics[qi].name===PINNED_2_NAME){ t2=d.topics[qi]; break; } }
-            if(!t2){ t2={ id:uid(), name:PINNED_2_NAME, color:COLORS[3], icon:"📒", items:[], sheetUrl:PINNED_2_SHEET, sheetTab:(PINNED_2_TAB||"") }; d.topics.push(t2); }
-            else if(t2.sheetUrl){ t2.sheetUrl=PINNED_2_SHEET; t2.sheetTab=PINNED_2_TAB||""; }  // 仍連動→校正到正確分頁；已轉固定(無url)→保持固定
-          }
+          (function(){
+            var sw=null;
+            for(var qi=0;qi<d.topics.length;qi++){
+              var nm=d.topics[qi].name;
+              if(nm===SWITCH_NAME || SWITCH_OLDNAMES.indexOf(nm)>-1){ sw=d.topics[qi]; break; }
+            }
+            if(sw){ sw.name=SWITCH_NAME; sw.sheetUrl=""; sw.sheetTab=""; if(sw.sheetCache) sw.sheetCache.seed=false; }
+          })();
           if(PINNED_FIRST_SEED && d.topics[0] && (!d.topics[0].sheetCache || d.topics[0].sheetCache.seed)){
             d.topics[0].sheetCache = { rows: PINNED_FIRST_SEED, at: Date.now(), seed: true };
           }
