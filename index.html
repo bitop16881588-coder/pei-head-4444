@@ -183,6 +183,12 @@
   }
   .mini-btn:hover{border-color:var(--accent);background:var(--accent-soft)}
   .mini-btn:disabled{opacity:.6;cursor:default}
+  .sheet-search{display:flex;align-items:center;gap:8px;margin:0 0 9px;
+    border:2px solid var(--line);border-radius:12px;padding:4px 10px;background:#fff}
+  .sheet-search .ss-ic{font-size:14px;opacity:.7}
+  .sheet-search input{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 2px}
+  .sheet-search .ss-clear{border:none;background:transparent;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:4px 6px;border-radius:8px}
+  .sheet-search .ss-clear:hover{background:var(--accent-soft);color:var(--accent)}
   .sheet-scroll{overflow:auto;max-height:340px;border-radius:12px;border:1px solid var(--line)}
   table.sheet-tbl{border-collapse:collapse;width:100%;font-size:13px}
   table.sheet-tbl th,table.sheet-tbl td{
@@ -383,6 +389,9 @@
   var GOOGLE_CLIENT_ID = "460796542989-qlpqr0sjm4h492d49k3h7qikbre3ep4c.apps.googleusercontent.com";   // ← 貼這裡
   var GOOGLE_SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
   var gToken = null, gTokenClient = null, pendingAfterAuth = null;
+  var gTokenAt = 0;                 // 取得 token 的時間（用來判斷快過期）
+  var AUTO_REFRESH_MS = 5*60*1000;  // 連動表自動重新整理間隔（5 分鐘）
+  var autoRefreshTimer = null;      // 目前連動主題的自動刷新計時器
 
   var state = load();
   var view = "home";          // "home" | "topic"
@@ -394,6 +403,7 @@
   var pendingDelItem = null;  // item id awaiting 2nd-tap confirm
   var pendingDelTopic = false;
   var sheetSync = {};         // topicId -> {loading, error} (transient, not saved)
+  var sheetFilters = {};      // topicId -> 篩選關鍵字 (transient)
 
   /* ---------- storage ---------- */
   function load(){
@@ -466,6 +476,7 @@
     $("newItemInput").value = ""; $("addItemBtn").disabled = true;
     renderHome();
     maybeSync(id);
+    setupAutoRefresh(id);
   }
   // 打開連動主題時自動抓最新（沒抓過、或上次抓超過30秒就更新）
   function maybeSync(id){
@@ -473,6 +484,15 @@
     if(!t || !t.sheetUrl) return;
     var fresh = t.sheetCache && (Date.now()-t.sheetCache.at < 30000);
     if(!fresh) syncSheet(id);
+  }
+  // 目前看的連動主題每隔幾分鐘自動刷新一次
+  function setupAutoRefresh(id){
+    if(autoRefreshTimer){ clearInterval(autoRefreshTimer); autoRefreshTimer=null; }
+    var t=topicById(id);
+    if(!t || !t.sheetUrl) return;
+    autoRefreshTimer = setInterval(function(){
+      if(curTopic===id && document.visibilityState!=="hidden") syncSheet(id);
+    }, AUTO_REFRESH_MS);
   }
 
   /* ---------- render: panel content ---------- */
@@ -627,6 +647,7 @@
       callback: function(resp){
         if(resp && resp.access_token){
           gToken = resp.access_token;
+          gTokenAt = Date.now();
           try{ localStorage.setItem("gConnected","1"); }catch(e){}
           updateAuthBtn();
           var f = pendingAfterAuth; pendingAfterAuth = null;
@@ -635,6 +656,16 @@
       }
     });
     return gTokenClient;
+  }
+  // token 約 1 小時過期；快過期就在背景靜默換新，不跳視窗
+  function ensureFreshToken(cb){
+    var fresh = gToken && (Date.now()-gTokenAt < 50*60*1000);
+    if(fresh){ cb(); return; }
+    if(!GOOGLE_CLIENT_ID || !gReady()){ cb(); return; }
+    var tc = ensureTokenClient();
+    if(!tc){ cb(); return; }
+    pendingAfterAuth = cb;
+    tc.requestAccessToken({ prompt: "" });   // 靜默續授權
   }
   function gConnect(){
     if(!GOOGLE_CLIENT_ID){ alert("還沒設定 Google 用戶端 ID。\n請先在程式碼最上面的 GOOGLE_CLIENT_ID 填入你的 OAuth 用戶端 ID。"); return; }
@@ -686,23 +717,25 @@
     if(!ref){ sheetSync[id]={loading:false,error:"連結看不出試算表 ID。"}; if(curTopic===id) renderSheetBlock(t); return; }
     if(!gToken){ sheetSync[id]={loading:false,error:"__NEEDLOGIN__"}; if(curTopic===id) renderSheetBlock(t); return; }
     sheetSync[id]={loading:true,error:""}; if(curTopic===id) renderSheetBlock(t);
-    var base="https://sheets.googleapis.com/v4/spreadsheets/"+ref.id;
-    var hdr={ headers:{ Authorization:"Bearer "+gToken } };
-    fetch(base+"?fields=sheets(properties(sheetId,title))", hdr).then(handle401).then(function(meta){
-      var title=null;
-      (meta.sheets||[]).forEach(function(s){ if(s.properties.sheetId===ref.gid) title=s.properties.title; });
-      if(!title && meta.sheets && meta.sheets[0]) title=meta.sheets[0].properties.title;
-      if(!title) throw new Error("NOT_FOUND");
-      return fetch(base+"/values/"+encodeURIComponent(title)+"?majorDimension=ROWS", hdr).then(handle401);
-    }).then(function(vals){
-      t.sheetCache={ rows:(vals.values||[]), at:Date.now() };
-      sheetSync[id]={loading:false,error:""};
-      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
-      if(curTopic===id) renderSheetBlock(t);
-    }).catch(function(e){
-      if(e && e.message==="__401__"){ pendingAfterAuth=function(){ syncViaApi(id); }; gConnect(); return; }
-      sheetSync[id]={loading:false, error:friendlyApiErr(e)};
-      if(curTopic===id) renderSheetBlock(t);
+    ensureFreshToken(function(){
+      var base="https://sheets.googleapis.com/v4/spreadsheets/"+ref.id;
+      var hdr={ headers:{ Authorization:"Bearer "+gToken } };
+      fetch(base+"?fields=sheets(properties(sheetId,title))", hdr).then(handle401).then(function(meta){
+        var title=null;
+        (meta.sheets||[]).forEach(function(s){ if(s.properties.sheetId===ref.gid) title=s.properties.title; });
+        if(!title && meta.sheets && meta.sheets[0]) title=meta.sheets[0].properties.title;
+        if(!title) throw new Error("NOT_FOUND");
+        return fetch(base+"/values/"+encodeURIComponent(title)+"?majorDimension=ROWS", hdr).then(handle401);
+      }).then(function(vals){
+        t.sheetCache={ rows:(vals.values||[]), at:Date.now() };
+        sheetSync[id]={loading:false,error:""};
+        try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+        if(curTopic===id) renderSheetBlock(t);
+      }).catch(function(e){
+        if(e && e.message==="__401__"){ pendingAfterAuth=function(){ syncViaApi(id); }; gConnect(); return; }
+        sheetSync[id]={loading:false, error:friendlyApiErr(e)};
+        if(curTopic===id) renderSheetBlock(t);
+      });
     });
   }
 
@@ -738,21 +771,30 @@
     if(cur.length||row.length){ row.push(cur); rows.push(row); }
     return rows.filter(function(r){ return r.some(function(x){return x!=="";}); });
   }
-  function renderTable(rows){
+  function renderTable(rows, filter){
     var MAX=120;
-    var shown=rows.slice(0,MAX);
-    var cols=0; shown.forEach(function(r){ if(r.length>cols) cols=r.length; });
+    var head=rows[0]||[];
+    var body=rows.slice(1);
+    var q=(filter||"").trim().toLowerCase();
+    if(q){
+      body=body.filter(function(r){
+        return r.some(function(x){ return String(x==null?"":x).toLowerCase().indexOf(q)>-1; });
+      });
+    }
+    var totalData=rows.length>0?rows.length-1:0;
+    var shownBody=body.slice(0,MAX);
+    var cols=0; [head].concat(shownBody).forEach(function(r){ if(r.length>cols) cols=r.length; });
     var h='<div class="sheet-scroll"><table class="sheet-tbl"><thead><tr>';
-    var head=shown[0]||[];
     for(var k=0;k<cols;k++) h+='<th>'+esc(head[k]!=null?head[k]:"")+'</th>';
     h+='</tr></thead><tbody>';
-    for(var r=1;r<shown.length;r++){
+    for(var r=0;r<shownBody.length;r++){
       h+='<tr>';
-      for(var k=0;k<cols;k++) h+='<td>'+esc(shown[r][k]!=null?shown[r][k]:"")+'</td>';
+      for(var k2=0;k2<cols;k2++) h+='<td>'+esc(shownBody[r][k2]!=null?shownBody[r][k2]:"")+'</td>';
       h+='</tr>';
     }
     h+='</tbody></table></div>';
-    if(rows.length>MAX) h+='<div class="sheet-more">僅顯示前 '+MAX+' 列，共 '+rows.length+' 列。</div>';
+    if(q) h+='<div class="sheet-more">符合「'+esc(filter.trim())+'」：'+body.length+' / '+totalData+' 列'+(body.length>MAX?'（顯示前 '+MAX+'）':'')+'</div>';
+    else if(totalData>MAX) h+='<div class="sheet-more">僅顯示前 '+MAX+' 列，共 '+totalData+' 列。</div>';
     return h;
   }
   function clockStr(ts){
@@ -766,11 +808,17 @@
     var st=sheetSync[t.id]||{};
     var meta = st.loading ? "更新中…"
              : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取");
+    var hasData = t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
+    var fval = sheetFilters[t.id]||"";
     var h='<div class="sheet-bar"><span class="sheet-title">📊 連動試算表</span>'
         + '<span class="sheet-meta">'+meta+'</span>'
         + '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button></div>';
-    if(t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length){
-      h+=renderTable(t.sheetCache.rows);
+    if(hasData){
+      h+='<div class="sheet-search"><span class="ss-ic">🔍</span>'
+       + '<input id="sheetFilter" type="text" placeholder="關鍵字篩選…" value="'+esc(fval)+'">'
+       + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
+       + '</div>';
+      h+='<div id="sheetTableWrap">'+renderTable(t.sheetCache.rows, fval)+'</div>';
     }
     if(st.error==="__NEEDLOGIN__"){
       h+='<div class="sheet-empty">這份是私人試算表，請先登入 Google 才能讀取。<br>'
@@ -787,6 +835,18 @@
     if(rb) rb.addEventListener("click", function(){ syncSheet(t.id); });
     var lb=$("sheetLogin");
     if(lb) lb.addEventListener("click", function(){ pendingAfterAuth=function(){ syncSheet(t.id); }; gConnect(); });
+    var fi=$("sheetFilter");
+    if(fi) fi.addEventListener("input", function(){
+      sheetFilters[t.id]=fi.value;
+      var wrap=$("sheetTableWrap");
+      if(wrap) wrap.innerHTML=renderTable(t.sheetCache.rows, fi.value);
+      var cl=$("sheetFilterClear");
+      if(fi.value && !cl){ renderSheetBlock(t); $("sheetFilter").focus();
+        var el=$("sheetFilter"); el.setSelectionRange(el.value.length, el.value.length); }
+      if(!fi.value && cl){ renderSheetBlock(t); $("sheetFilter").focus(); }
+    });
+    var fc=$("sheetFilterClear");
+    if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
   }
   function syncViaCsv(id){
     var t=topicById(id);
@@ -980,7 +1040,15 @@
 
   updateAuthBtn();
   renderHome();
-  if(curTopic) maybeSync(curTopic);
+  if(curTopic){ maybeSync(curTopic); setupAutoRefresh(curTopic); }
+
+  // 切回此分頁時，順手刷新目前連動主題
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible" && curTopic){
+      var t=topicById(curTopic);
+      if(t && t.sheetUrl) syncSheet(curTopic);
+    }
+  });
 
   // 之前登入過就嘗試靜默取回授權（等 GIS 載入）
   if(GOOGLE_CLIENT_ID && localStorage.getItem("gConnected")){
