@@ -537,9 +537,11 @@
   var PINNED_FIRST_SHEET = "https://docs.google.com/spreadsheets/d/1zh8eNjaZGaucZj0l_Ho_ePtHwmkEv9OhBQk6Z89o1pE/edit?gid=1281810974#gid=1281810974";
   var PINNED_FIRST_NAME = "加减";   // 第一個主題固定名稱（留空 "" 即不固定）
 
-  /* 「开关」(原資料2)：永遠不連動，保留已抓到的內容當固定資料 */
+  /* 「开关」(原資料2)：抓一次就自動永久固定，之後不連動、免登入 */
   var SWITCH_NAME = "开关";
   var SWITCH_OLDNAMES = ["資料2","资料2"];
+  var SWITCH_SHEET = "https://docs.google.com/spreadsheets/d/1XMwpdQ1D8ENk7aA5BHTDVlNlkoSTR4KnKIDvsqnhyfI/edit?usp=sharing";
+  var SWITCH_TAB = "四方『内外部』NEW";
 
   /* 第一個主題的「內建快照」：沒登入時先顯示這份，登入後自動換成最新即時資料 */
   var PINNED_FIRST_SEED = [
@@ -618,7 +620,12 @@
               var nm=d.topics[qi].name;
               if(nm===SWITCH_NAME || SWITCH_OLDNAMES.indexOf(nm)>-1){ sw=d.topics[qi]; break; }
             }
-            if(sw){ sw.name=SWITCH_NAME; sw.sheetUrl=""; sw.sheetTab=""; if(sw.sheetCache) sw.sheetCache.seed=false; }
+            if(sw){
+              sw.name=SWITCH_NAME;
+              var hasData = sw.sheetCache && sw.sheetCache.rows && sw.sheetCache.rows.length;
+              if(hasData){ sw.sheetUrl=""; sw.sheetTab=""; sw.autoFreeze=false; if(sw.sheetCache) sw.sheetCache.seed=false; }
+              else { sw.sheetUrl=SWITCH_SHEET; sw.sheetTab=SWITCH_TAB; sw.autoFreeze=true; }
+            }
           })();
           if(PINNED_FIRST_SEED && d.topics[0] && (!d.topics[0].sheetCache || d.topics[0].sheetCache.seed)){
             d.topics[0].sheetCache = { rows: PINNED_FIRST_SEED, at: Date.now(), seed: true };
@@ -943,8 +950,12 @@
       }).then(function(vals){
         t.sheetCache={ rows:(vals.values||[]), at:Date.now() };
         sheetSync[id]={loading:false,error:""};
+        if(t.autoFreeze && t.sheetCache.rows.length){   // 抓到就自動永久固定
+          t.autoFreeze=false; t.frozenUrl=t.sheetUrl; t.frozenTab=t.sheetTab||"";
+          t.sheetUrl=""; t.sheetTab="";
+        }
         try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
-        if(curTopic===id) renderSheetBlock(t);
+        if(curTopic===id) renderHome();
       }).catch(function(e){
         if(e && e.message==="__401__"){ pendingAfterAuth=function(){ syncViaApi(id); }; gConnect(); return; }
         sheetSync[id]={loading:false, error:friendlyApiErr(e)};
