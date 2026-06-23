@@ -537,11 +537,50 @@
   var PINNED_FIRST_SHEET = "https://docs.google.com/spreadsheets/d/1zh8eNjaZGaucZj0l_Ho_ePtHwmkEv9OhBQk6Z89o1pE/edit?gid=1281810974#gid=1281810974";
   var PINNED_FIRST_NAME = "加减";   // 第一個主題固定名稱（留空 "" 即不固定）
 
-  /* 「开关」(原資料2)：抓一次就自動永久固定，之後不連動、免登入 */
+  /* 「开关」(原資料2)：永久固定、不連動、免登入。內建你截圖那張表（看圖打的，請核對） */
   var SWITCH_NAME = "开关";
   var SWITCH_OLDNAMES = ["資料2","资料2"];
-  var SWITCH_SHEET = "https://docs.google.com/spreadsheets/d/1XMwpdQ1D8ENk7aA5BHTDVlNlkoSTR4KnKIDvsqnhyfI/edit?usp=sharing";
-  var SWITCH_TAB = "四方『内外部』NEW";
+  var SWITCH_SEED = [
+    ["商户名称","内部","外部","放置金","下发时间","出款","下发","备注"],
+    ["JJ卡卡","","","","","✓","✕",""],
+    ["JJ支付宝","","","","","✓","✕",""],
+    ["JJ数字人民币","","X","","","✓","✕",""],
+    ["JJ微信","","","","","✓","✕",""],
+    ["WF微信","","X","","","✓","✕",""],
+    ["WF支付宝","自动","","","","✓","✕",""],
+    ["ZCPAY支付宝","","","5A","","✕","✓","2/8 内4外1"],
+    ["全通支付宝","推护","推护","10A","","✕","✓","25/6/4 约定24H"],
+    ["和奕代付","自动","","×","","✓","✕","10/12 预留5000起 当测试金 农业 工商不出款"],
+    ["和奕支付宝","自动","X","×","","✕","✓","09/03 开启"],
+    ["新宝支付宝","","","20A","","✕","✓","5/21 自用"],
+    ["新宝银联","","","3A","","✕","✓","26/05/06 通知开启"],
+    ["新宝数字人民币","等级长通知开启","","3A","","✕","✓","26/05/06 通知开启"],
+    ["GOSM美多多【支付宝】","","停用","10A","下发单间需满2000U","✕","✓","6/24 内10A 25/08/13 通知开启"],
+    ["GOSM美多多【微信】","","X","","","✕","✓","自量无限制 收款时间部全宝"],
+    ["VCOTC支付宝","","X","","","✕","✓",""],
+    ["码上支付宝（新人层）","","","10A","下发单间需满5000U","✕","✓","25/6/4 告知:开启"],
+    ["码上纯代收","","","","","✕","✓","自量2A"],
+    ["码上小额卡卡","","","4A","下发单间需满5000U","✕","✓","26/2/4"],
+    ["onepay【小荷包】-109","等级长通知开启","","5A","","✕","✓","自量1A"],
+    ["onepay【数字人民币】-302","","","5A","","✕","✓","25/11/8 告知:开启"],
+    ["onepay【银联扫码】-304","等级长通知开启","","8000","下发单间需满1000U","✕","✓","25/10/23 告知:开启"],
+    ["宝诺银联扫码【8007】","","","8000","下发单间需满1000U","✕","✓","宝诺系列金额可共拼"],
+    ["宝诺数字人民币【8005】","","","3A","","✕","✓","25/11/3 告知:开启"],
+    ["宝诺小荷包【8001】","","","3A","","✕","✓","25/10/23 告知:开启"],
+    ["宝诺原生支付宝H5【8077】","等级长通知开启","","3A","上午9点","✕","✓","26/3/3 告知:开启"],
+    ["宝诺支付宝UID【8084】","等级长通知开启","","10A","","✕","✓","26/1/5 告知:开启"],
+    ["XQ支付-小额卡卡","","","5A","","✕","✓","25/9/17 告知:开启"],
+    ["红喜鹊卡转卡","","","5A","","✕","✓","26/04/08 告知:开启"],
+    ["红喜鹊支转支","等级长通知开启","","5A","下发单间需满1000U","✕","✓","26/04/15 告知:开启"],
+    ["XPAY支付宝","","","5A","","✕","✓","25/5/28 告知:开启"],
+    ["乐支付宝","","","3A","下发单间需满3000U","✕","✓","自量4A"],
+    ["KW支付宝","","","5A","下发单间需满人民币2A","✕","✓","26/3/18 告知:开启"],
+    ["KW支付宝-TOMMY","","","4A","下发单间需满人民币2A","✕","✓","26/4/22 告知:开启"],
+    ["TKpay支付宝","自动","","","下发单间需满人民币2A","✕","✓","26/3/18 告知:开启"],
+    ["HCPAY","","","5A","下发单间需满3000U","✕","✓","26/1/14 告知:开启"],
+    ["SIANGO PAY支付宝金条原生H5","","","预R 5A","×","✕","✓","25/12/17 告知:开启"],
+    ["乐力onepay支付宝","","","3A","下发单间需满3000U","✕","✓","自量3A 26/4/29 告知:开启"]
+  ];
 
   /* 第一個主題的「內建快照」：沒登入時先顯示這份，登入後自動換成最新即時資料 */
   var PINNED_FIRST_SEED = [
@@ -601,6 +640,23 @@
   var sheetFilters = {};      // topicId -> 篩選關鍵字 (transient)
 
   /* ---------- storage ---------- */
+  function applyPinned(d){
+    function find(name){ for(var i=0;i<d.topics.length;i++){ if(d.topics[i].name===name) return d.topics[i]; } return null; }
+    // 加减：連動 + 內建金額快照（免登入先看快照）
+    var ta=find("加减");
+    if(!ta){ ta={ id:uid(), name:"加减", color:COLORS[1], icon:"💰", items:[] }; d.topics.unshift(ta); }
+    ta.sheetUrl=PINNED_FIRST_SHEET;
+    if(!ta.sheetCache || ta.sheetCache.seed){ ta.sheetCache={ rows:PINNED_FIRST_SEED, at:Date.now(), seed:true }; }
+    // 开关：永久固定、不連動，內建截圖快照
+    var sw=find(SWITCH_NAME);
+    if(!sw){ for(var k=0;k<SWITCH_OLDNAMES.length && !sw;k++) sw=find(SWITCH_OLDNAMES[k]); }
+    if(!sw){ sw={ id:uid(), name:SWITCH_NAME, color:COLORS[3], icon:"📒", items:[] }; d.topics.push(sw); }
+    sw.name=SWITCH_NAME; sw.sheetUrl=""; sw.sheetTab="";
+    if(!sw.sheetCache || sw.sheetCache.seed || !sw.sheetCache.rows || !sw.sheetCache.rows.length){
+      sw.sheetCache={ rows:SWITCH_SEED, at:Date.now(), seed:true };
+    }
+    return d;
+  }
   function load(){
     try{
       var raw = localStorage.getItem(KEY);
@@ -612,29 +668,11 @@
             if(!t.icon) t.icon = ICONS[0];
             if(!t.color) t.color = COLORS[0];
           });
-          if(PINNED_FIRST_SHEET && d.topics[0]) d.topics[0].sheetUrl = PINNED_FIRST_SHEET;
-          if(PINNED_FIRST_NAME && d.topics[0]) d.topics[0].name = PINNED_FIRST_NAME;
-          (function(){
-            var sw=null;
-            for(var qi=0;qi<d.topics.length;qi++){
-              var nm=d.topics[qi].name;
-              if(nm===SWITCH_NAME || SWITCH_OLDNAMES.indexOf(nm)>-1){ sw=d.topics[qi]; break; }
-            }
-            if(sw){
-              sw.name=SWITCH_NAME;
-              var hasData = sw.sheetCache && sw.sheetCache.rows && sw.sheetCache.rows.length;
-              if(hasData){ sw.sheetUrl=""; sw.sheetTab=""; sw.autoFreeze=false; if(sw.sheetCache) sw.sheetCache.seed=false; }
-              else { sw.sheetUrl=SWITCH_SHEET; sw.sheetTab=SWITCH_TAB; sw.autoFreeze=true; }
-            }
-          })();
-          if(PINNED_FIRST_SEED && d.topics[0] && (!d.topics[0].sheetCache || d.topics[0].sheetCache.seed)){
-            d.topics[0].sheetCache = { rows: PINNED_FIRST_SEED, at: Date.now(), seed: true };
-          }
-          return d;
+          return applyPinned(d);
         }
       }
     }catch(e){}
-    return { topics: [] };
+    return applyPinned({ topics: [] });
   }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
