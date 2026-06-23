@@ -189,12 +189,12 @@
   .sheet-search input{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 2px}
   .sheet-search .ss-clear{border:none;background:transparent;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:4px 6px;border-radius:8px}
   .sheet-search .ss-clear:hover{background:var(--accent-soft);color:var(--accent)}
-  .sheet-scroll{overflow:auto;max-height:340px;border-radius:12px;border:1px solid var(--line)}
+  .sheet-scroll{overflow:auto;max-height:80vh;border-radius:12px;border:1px solid var(--line)}
   table.sheet-tbl{border-collapse:collapse;width:100%;font-size:13px}
   table.sheet-tbl th,table.sheet-tbl td{
     border:1px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap;
   }
-  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;font-family:var(--round)}
+  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;z-index:2;font-family:var(--round);box-shadow:0 1px 0 var(--line)}
   table.sheet-tbl tbody tr:nth-child(even){background:#fff8f5}
   .sheet-err{color:var(--danger);font-size:13px;padding:6px 2px;line-height:1.5}
   .sheet-empty{color:var(--ink-soft);font-size:13px;padding:8px 2px}
@@ -377,6 +377,7 @@
 (function(){
   "use strict";
   var KEY = "shixiang_bu_v1";
+  var LASTKEY = "shixiang_last_topic";
   var COLORS = ["#e07a5f","#e9a23b","#7fa05a","#4d9d8f","#5b8fb0","#8a7fb0","#c2748f","#9a8478"];
   var ICONS = ["📌","⭐","💰","🏠","💼","📅","🛒","💊","🎓","✈️","🍴","🐱","🎁","📞","🔑","❤️","📝","🏥","🚗","🌱"];
 
@@ -473,6 +474,7 @@
   function selectTopic(id){
     if(curTopic===id) return;
     curTopic = id; pendingDelItem = null;
+    try{ localStorage.setItem(LASTKEY, id); }catch(e){}
     $("newItemInput").value = ""; $("addItemBtn").disabled = true;
     renderHome();
     maybeSync(id);
@@ -772,7 +774,7 @@
     return rows.filter(function(r){ return r.some(function(x){return x!=="";}); });
   }
   function renderTable(rows, filter){
-    var MAX=120;
+    var MAX=1000;
     var head=rows[0]||[];
     var body=rows.slice(1);
     var q=(filter||"").trim().toLowerCase();
@@ -1039,6 +1041,8 @@
   });
 
   updateAuthBtn();
+  // 還原上次打開的主題，重開停在原處
+  try{ var _last=localStorage.getItem(LASTKEY); if(_last && topicById(_last)) curTopic=_last; }catch(e){}
   renderHome();
   if(curTopic){ maybeSync(curTopic); setupAutoRefresh(curTopic); }
 
