@@ -43,7 +43,7 @@
     -webkit-font-smoothing:antialiased;
     padding-bottom:env(safe-area-inset-bottom);
   }
-  .wrap{max-width:1200px;margin:0 auto;padding:20px 12px 80px}
+  .wrap{max-width:none;margin:0 auto;padding:20px 22px 80px}
 
   /* header */
   header.app{display:flex;align-items:center;gap:13px;margin-bottom:22px}
@@ -201,6 +201,12 @@
   td.amt{font-variant-numeric:tabular-nums;font-weight:600}
   .st-yes{display:inline-block;min-width:1.5em;padding:.08em .45em;border-radius:.55em;background:#dcefe0;color:#1f7a3a;font-weight:700}
   .st-no{display:inline-block;min-width:1.5em;padding:.08em .45em;border-radius:.55em;background:#f6e0db;color:#c0492f;font-weight:700}
+  td.dropcell{padding:5px 6px}
+  .cell-sel{
+    font:inherit;font-size:13.5px;border:1.5px solid var(--line);border-radius:8px;
+    padding:5px 6px;background:#fff;color:var(--ink);max-width:11em;cursor:pointer;font-weight:600;outline:none;
+  }
+  .cell-sel:focus{box-shadow:0 0 0 2px rgba(255,140,122,.4)}
   td.amt span{margin-right:4px}
   .copy-btn{
     border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;
@@ -598,29 +604,29 @@
     ["WF微信","","X","","","✓","✕",""],
     ["WF支付宝","自动","","","","✓","✕",""],
     ["ZCPAY支付宝","","","5A","","✕","✓","2/8 内4外1"],
-    ["全通支付宝","推护","推护","10A","","✕","✓","25/6/4 约定24H"],
+    ["全通支付宝","维护","维护","10A","","✕","✓","25/6/4 约定24H"],
     ["和奕代付","自动","","×","","✓","✕","10/12 预留5000起 当测试金 农业 工商不出款"],
     ["和奕支付宝","自动","X","×","","✕","✓","09/03 开启"],
     ["新宝支付宝","","","20A","","✕","✓","5/21 自用"],
     ["新宝银联","","","3A","","✕","✓","26/05/06 通知开启"],
-    ["新宝数字人民币","等级长通知开启","","3A","","✕","✓","26/05/06 通知开启"],
+    ["新宝数字人民币","等老师通知开启","","3A","","✕","✓","26/05/06 通知开启"],
     ["GOSM美多多【支付宝】","","停用","10A","下发单间需满2000U","✕","✓","6/24 内10A 25/08/13 通知开启"],
     ["GOSM美多多【微信】","","X","","","✕","✓","自量无限制 收款时间部全宝"],
     ["VCOTC支付宝","","X","","","✕","✓",""],
     ["码上支付宝（新人层）","","","10A","下发单间需满5000U","✕","✓","25/6/4 告知:开启"],
     ["码上纯代收","","","","","✕","✓","自量2A"],
     ["码上小额卡卡","","","4A","下发单间需满5000U","✕","✓","26/2/4"],
-    ["onepay【小荷包】-109","等级长通知开启","","5A","","✕","✓","自量1A"],
+    ["onepay【小荷包】-109","等老师通知开启","","5A","","✕","✓","自量1A"],
     ["onepay【数字人民币】-302","","","5A","","✕","✓","25/11/8 告知:开启"],
-    ["onepay【银联扫码】-304","等级长通知开启","","8000","下发单间需满1000U","✕","✓","25/10/23 告知:开启"],
+    ["onepay【银联扫码】-304","等老师通知开启","","8000","下发单间需满1000U","✕","✓","25/10/23 告知:开启"],
     ["宝诺银联扫码【8007】","","","8000","下发单间需满1000U","✕","✓","宝诺系列金额可共拼"],
     ["宝诺数字人民币【8005】","","","3A","","✕","✓","25/11/3 告知:开启"],
     ["宝诺小荷包【8001】","","","3A","","✕","✓","25/10/23 告知:开启"],
-    ["宝诺原生支付宝H5【8077】","等级长通知开启","","3A","上午9点","✕","✓","26/3/3 告知:开启"],
-    ["宝诺支付宝UID【8084】","等级长通知开启","","10A","","✕","✓","26/1/5 告知:开启"],
+    ["宝诺原生支付宝H5【8077】","等老师通知开启","","3A","上午9点","✕","✓","26/3/3 告知:开启"],
+    ["宝诺支付宝UID【8084】","等老师通知开启","","10A","","✕","✓","26/1/5 告知:开启"],
     ["XQ支付-小额卡卡","","","5A","","✕","✓","25/9/17 告知:开启"],
     ["红喜鹊卡转卡","","","5A","","✕","✓","26/04/08 告知:开启"],
-    ["红喜鹊支转支","等级长通知开启","","5A","下发单间需满1000U","✕","✓","26/04/15 告知:开启"],
+    ["红喜鹊支转支","等老师通知开启","","5A","下发单间需满1000U","✕","✓","26/04/15 告知:开启"],
     ["XPAY支付宝","","","5A","","✕","✓","25/5/28 告知:开启"],
     ["乐支付宝","","","3A","下发单间需满3000U","✕","✓","自量4A"],
     ["KW支付宝","","","5A","下发单间需满人民币2A","✕","✓","26/3/18 告知:开启"],
@@ -691,6 +697,14 @@
   /* ---------- storage ---------- */
   function applyPinned(d){
     function find(name){ for(var i=0;i<d.topics.length;i++){ if(d.topics[i].name===name) return d.topics[i]; } return null; }
+    // 清理舊字：推护 → 维护（含已存在瀏覽器的編輯資料）
+    d.topics.forEach(function(t){
+      if(t.sheetCache && t.sheetCache.rows){
+        t.sheetCache.rows.forEach(function(row){
+          if(row && row.length) for(var i=0;i<row.length;i++){ if(row[i]==="推护") row[i]="维护"; }
+        });
+      }
+    });
     // 加减：連動 + 內建金額快照（免登入先看快照）
     var ta=find("加减");
     if(!ta){ ta={ id:uid(), name:"加减", color:COLORS[1], icon:"💰", items:[] }; d.topics.unshift(ta); }
@@ -1086,20 +1100,22 @@
   function renderTable(rows, filter){
     var MAX=1000;
     var head=rows[0]||[];
-    var body=rows.slice(1);
     var q=(filter||"").trim().toLowerCase();
+    var data=[]; for(var di=1;di<rows.length;di++){ data.push({row:rows[di], idx:di}); }
     if(q){
-      body=body.filter(function(r){
-        return r.some(function(x){ return String(x==null?"":x).toLowerCase().indexOf(q)>-1; });
+      data=data.filter(function(o){
+        return o.row.some(function(x){ return String(x==null?"":x).toLowerCase().indexOf(q)>-1; });
       });
     }
     var totalData=rows.length>0?rows.length-1:0;
-    var shownBody=body.slice(0,MAX);
-    var cols=0; [head].concat(shownBody).forEach(function(r){ if(r.length>cols) cols=r.length; });
-    // 哪些欄要加複製鈕：金額、三方、商戶名（掃描前兩列表頭，兼容合併標題）
-    var copyCol={};
+    var shown=data.slice(0,MAX);
+    var cols=0; [head].concat(shown.map(function(o){return o.row;})).forEach(function(r){ if(r.length>cols) cols=r.length; });
+    // 哪些欄要加複製鈕 / 下拉
+    var copyCol={}, dropCol={};
     var hdrRows=[rows[0]||[], rows[1]||[]];
     for(var c=0;c<cols;c++){
+      var htrim=String(head[c]!=null?head[c]:"").trim();
+      if(htrim==="内部"||htrim==="外部"||htrim==="內部") dropCol[c]=true;
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
         if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
@@ -1112,12 +1128,15 @@
       h+='<th'+thc+'>'+esc(ht)+'</th>';
     }
     h+='</tr></thead><tbody>';
-    for(var r=0;r<shownBody.length;r++){
+    for(var ri=0;ri<shown.length;ri++){
+      var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
       h+='<tr>';
       for(var k2=0;k2<cols;k2++){
-        var val=shownBody[r][k2]!=null?shownBody[r][k2]:"";
+        var val=rowArr[k2]!=null?rowArr[k2]:"";
         var sv=String(val).trim();
-        if(copyCol[k2] && sv!==""){
+        if(dropCol[k2]){
+          h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2)+'</td>';
+        }else if(copyCol[k2] && sv!==""){
           h+='<td class="amt"><span>'+esc(val)+'</span>'
            + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
         }else if(/^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(sv)){
@@ -1131,9 +1150,56 @@
       h+='</tr>';
     }
     h+='</tbody></table></div>';
-    if(q) h+='<div class="sheet-more">符合「'+esc(filter.trim())+'」：'+body.length+' / '+totalData+' 列'+(body.length>MAX?'（顯示前 '+MAX+'）':'')+'</div>';
+    if(q) h+='<div class="sheet-more">符合「'+esc(filter.trim())+'」：'+data.length+' / '+totalData+' 列'+(data.length>MAX?'（顯示前 '+MAX+'）':'')+'</div>';
     else if(totalData>MAX) h+='<div class="sheet-more">僅顯示前 '+MAX+' 列，共 '+totalData+' 列。</div>';
     return h;
+  }
+  /* 內部/外部 下拉狀態選項（含顏色） */
+  var CELL_OPTIONS = [
+    {t:"", c:""},
+    {t:"馀额过高", c:"#f2c3a3"},
+    {t:"日切", c:"#2f6fd0"},
+    {t:"维护", c:"#b51d24"},
+    {t:"X", c:"#444444"},
+    {t:"停用", c:"#7d3fb3"},
+    {t:"额满，充值关", c:"#7c5a2e"},
+    {t:"额满，充值没关", c:"#2c6e6e"},
+    {t:"等老师通知开启", c:"#a9cdee"},
+    {t:"代付不顺", c:"#e0852b"}
+  ];
+  function cellColor(v){ for(var i=0;i<CELL_OPTIONS.length;i++){ if(CELL_OPTIONS[i].t===v) return CELL_OPTIONS[i].c; } return ""; }
+  function textOn(hex){
+    if(!hex) return "";
+    var h=hex.replace("#",""); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+    return (0.299*r+0.587*g+0.114*b)>150 ? "#3a2f2a" : "#ffffff";
+  }
+  function buildCellSelect(val, r, c){
+    var cur=String(val==null?"":val), opts="", known=false;
+    CELL_OPTIONS.forEach(function(o){
+      if(o.t===cur) known=true;
+      opts+='<option value="'+esc(o.t)+'"'+(o.t===cur?" selected":"")+'>'+(o.t===""?"—":esc(o.t))+'</option>';
+    });
+    if(cur!=="" && !known) opts='<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>'+opts;
+    var col=cellColor(cur), style="";
+    if(col) style=' style="background:'+col+';color:'+textOn(col)+';border-color:'+col+'"';
+    return '<select class="cell-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+opts+'</select>';
+  }
+  function colorCellSel(sel){
+    var col=cellColor(sel.value);
+    if(col){ sel.style.background=col; sel.style.color=textOn(col); sel.style.borderColor=col; }
+    else { sel.style.background=""; sel.style.color=""; sel.style.borderColor=""; }
+  }
+  function onCellChange(e){
+    var sel=e.target;
+    if(!sel || !sel.classList || !sel.classList.contains("cell-sel")) return;
+    var t=topicById(curTopic); if(!t || !t.sheetCache || !t.sheetCache.rows) return;
+    var r=parseInt(sel.getAttribute("data-r"),10), c=parseInt(sel.getAttribute("data-c"),10);
+    var rows=t.sheetCache.rows;
+    if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=sel.value; }
+    t.sheetCache.seed=false;   // 變成已編輯，之後不被內建快照覆蓋
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
+    colorCellSel(sel);
   }
   function clockStr(ts){
     var d=new Date(ts), p=function(n){return(n<10?"0":"")+n;};
@@ -1224,7 +1290,7 @@
       if(!fi.value && cl){ renderSheetBlock(t); $("sheetFilter").focus(); }
     });
     var wrapC=$("sheetTableWrap");
-    if(wrapC) wrapC.addEventListener("click", onCopyClick);
+    if(wrapC){ wrapC.addEventListener("click", onCopyClick); wrapC.addEventListener("change", onCellChange); }
     var fc=$("sheetFilterClear");
     if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
   }
