@@ -381,6 +381,9 @@
   var COLORS = ["#e07a5f","#e9a23b","#7fa05a","#4d9d8f","#5b8fb0","#8a7fb0","#c2748f","#9a8478"];
   var ICONS = ["📌","⭐","💰","🏠","💼","📅","🛒","💊","🎓","✈️","🍴","🐱","🎁","📞","🔑","❤️","📝","🏥","🚗","🌱"];
 
+  /* 第一個主題固定連動這份試算表（留空字串 "" 即取消固定）*/
+  var PINNED_FIRST_SHEET = "https://docs.google.com/spreadsheets/d/1zh8eNjaZGaucZj0l_Ho_ePtHwmkEv9OhBQk6Z89o1pE/edit?gid=1281810974#gid=1281810974";
+
   /* ===== 你的 Google OAuth 設定（私人試算表連動用）=====
      1) 去 Google Cloud Console 啟用「Google Sheets API」
      2) 建立「OAuth 用戶端 ID（網頁應用程式）」，把你的 GitHub Pages 網址加進
@@ -418,6 +421,7 @@
             if(!t.icon) t.icon = ICONS[0];
             if(!t.color) t.color = COLORS[0];
           });
+          if(PINNED_FIRST_SHEET && d.topics[0]) d.topics[0].sheetUrl = PINNED_FIRST_SHEET;
           return d;
         }
       }
@@ -1041,6 +1045,7 @@
   });
 
   updateAuthBtn();
+  if(PINNED_FIRST_SHEET && state.topics[0]) save();   // 固定第一個主題的連動網址
   // 還原上次打開的主題，重開停在原處
   try{ var _last=localStorage.getItem(LASTKEY); if(_last && topicById(_last)) curTopic=_last; }catch(e){}
   renderHome();
