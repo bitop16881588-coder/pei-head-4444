@@ -540,6 +540,7 @@
   /* 資料2：固定一個叫「資料2」的主題並連動這份試算表（沒有就自動建立） */
   var PINNED_2_NAME = "資料2";
   var PINNED_2_SHEET = "https://docs.google.com/spreadsheets/d/1XMwpdQ1D8ENk7aA5BHTDVlNlkoSTR4KnKIDvsqnhyfI/edit?usp=sharing";
+  var PINNED_2_TAB = "四方『内外部』NEW";   // 指定要讀的分頁名稱（留空 "" 就讀第一個分頁）
 
   /* 第一個主題的「內建快照」：沒登入時先顯示這份，登入後自動換成最新即時資料 */
   var PINNED_FIRST_SEED = [
@@ -615,8 +616,8 @@
           if(PINNED_2_NAME && PINNED_2_SHEET){
             var t2=null;
             for(var qi=0;qi<d.topics.length;qi++){ if(d.topics[qi].name===PINNED_2_NAME){ t2=d.topics[qi]; break; } }
-            if(!t2){ t2={ id:uid(), name:PINNED_2_NAME, color:COLORS[3], icon:"📒", items:[] }; d.topics.push(t2); }
-            t2.sheetUrl=PINNED_2_SHEET;
+            if(!t2){ t2={ id:uid(), name:PINNED_2_NAME, color:COLORS[3], icon:"📒", items:[], sheetUrl:PINNED_2_SHEET, sheetTab:(PINNED_2_TAB||"") }; d.topics.push(t2); }
+            else if(t2.sheetUrl){ t2.sheetUrl=PINNED_2_SHEET; t2.sheetTab=PINNED_2_TAB||""; }  // 仍連動→校正到正確分頁；已轉固定(無url)→保持固定
           }
           if(PINNED_FIRST_SEED && d.topics[0] && (!d.topics[0].sheetCache || d.topics[0].sheetCache.seed)){
             d.topics[0].sheetCache = { rows: PINNED_FIRST_SEED, at: Date.now(), seed: true };
@@ -926,9 +927,16 @@
       var base="https://sheets.googleapis.com/v4/spreadsheets/"+ref.id;
       var hdr={ headers:{ Authorization:"Bearer "+gToken } };
       fetch(base+"?fields=sheets(properties(sheetId,title))", hdr).then(handle401).then(function(meta){
+        var sheets=meta.sheets||[];
         var title=null;
-        (meta.sheets||[]).forEach(function(s){ if(s.properties.sheetId===ref.gid) title=s.properties.title; });
-        if(!title && meta.sheets && meta.sheets[0]) title=meta.sheets[0].properties.title;
+        if(t.sheetTab){
+          var key=String(t.sheetTab).trim();
+          sheets.forEach(function(s){ if(s.properties.title===t.sheetTab) title=s.properties.title; });
+          if(!title) sheets.forEach(function(s){ if(String(s.properties.title).trim()===key) title=s.properties.title; });
+          if(!title) sheets.forEach(function(s){ if(String(s.properties.title).indexOf(key)>-1) title=s.properties.title; });
+        }
+        if(!title) sheets.forEach(function(s){ if(s.properties.sheetId===ref.gid) title=s.properties.title; });
+        if(!title && sheets[0]) title=sheets[0].properties.title;
         if(!title) throw new Error("NOT_FOUND");
         return fetch(base+"/values/"+encodeURIComponent(title)+"?majorDimension=ROWS", hdr).then(handle401);
       }).then(function(vals){
@@ -1058,17 +1066,26 @@
   }
   function renderSheetBlock(t){
     var box=$("sheetBlock");
-    if(!t || !t.sheetUrl){ box.classList.add("hidden"); box.innerHTML=""; return; }
+    var hasData = t && t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
+    var linked = !!(t && t.sheetUrl);
+    if(!t || (!linked && !hasData)){ box.classList.add("hidden"); box.innerHTML=""; return; }
     box.classList.remove("hidden");
     var st=sheetSync[t.id]||{};
-    var meta = st.loading ? "更新中…"
-             : (t.sheetCache && t.sheetCache.seed ? "內建快照 · 登入後更新"
-             : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取"));
-    var hasData = t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
     var fval = sheetFilters[t.id]||"";
-    var h='<div class="sheet-bar"><span class="sheet-title">📊 連動試算表</span>'
-        + '<span class="sheet-meta">'+meta+'</span>'
-        + '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button></div>';
+    var h;
+    if(linked){
+      var meta = st.loading ? "更新中…"
+               : (t.sheetCache && t.sheetCache.seed ? "內建快照 · 登入後更新"
+               : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取"));
+      h='<div class="sheet-bar"><span class="sheet-title">📊 連動試算表</span>'
+       + '<span class="sheet-meta">'+meta+'</span>'
+       + (hasData?'<button class="mini-btn" id="sheetFreeze" title="把目前內容凍結成固定，不再連動">📌 轉固定</button>':'')
+       + '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button></div>';
+    }else{
+      h='<div class="sheet-bar"><span class="sheet-title">📌 固定資料</span>'
+       + '<span class="sheet-meta">不連動</span>'
+       + '<button class="mini-btn" id="sheetRelink" title="重新接回試算表連動">↻ 重新連動</button></div>';
+    }
     if(hasData){
       h+='<div class="sheet-search"><span class="ss-ic">🔍</span>'
        + '<input id="sheetFilter" type="text" placeholder="關鍵字篩選…" value="'+esc(fval)+'">'
@@ -1076,21 +1093,27 @@
        + '</div>';
       h+='<div id="sheetTableWrap">'+renderTable(t.sheetCache.rows, fval)+'</div>';
     }
-    if(st.error==="__NEEDLOGIN__"){
-      h+='<div class="sheet-empty">這份是私人試算表，請先登入 Google 才能讀取。<br>'
-       + '<button class="mini-btn" id="sheetLogin" style="margin-top:8px">用 Google 登入讀取</button></div>';
-    }else if(st.error){
-      h+='<div class="sheet-err">'+esc(st.error)+'</div>';
-    }else if(!t.sheetCache && !st.loading){
-      h+='<div class="sheet-empty">按「重新整理」讀取試算表內容。</div>';
-    }else if(!t.sheetCache && st.loading){
-      h+='<div class="sheet-empty">讀取中…</div>';
+    if(linked){
+      if(st.error==="__NEEDLOGIN__"){
+        h+='<div class="sheet-empty">這份是私人試算表，請先登入 Google 才能讀取。<br>'
+         + '<button class="mini-btn" id="sheetLogin" style="margin-top:8px">用 Google 登入讀取</button></div>';
+      }else if(st.error){
+        h+='<div class="sheet-err">'+esc(st.error)+'</div>';
+      }else if(!t.sheetCache && !st.loading){
+        h+='<div class="sheet-empty">按「重新整理」讀取試算表內容。</div>';
+      }else if(!t.sheetCache && st.loading){
+        h+='<div class="sheet-empty">讀取中…</div>';
+      }
     }
     box.innerHTML=h;
     var rb=$("sheetRefresh");
     if(rb) rb.addEventListener("click", function(){ syncSheet(t.id); });
     var lb=$("sheetLogin");
     if(lb) lb.addEventListener("click", function(){ pendingAfterAuth=function(){ syncSheet(t.id); }; gConnect(); });
+    var fz=$("sheetFreeze");
+    if(fz) fz.addEventListener("click", function(){ freezeSheet(t.id); });
+    var rl=$("sheetRelink");
+    if(rl) rl.addEventListener("click", function(){ relinkSheet(t.id); });
     var fi=$("sheetFilter");
     if(fi) fi.addEventListener("input", function(){
       sheetFilters[t.id]=fi.value;
@@ -1105,6 +1128,22 @@
     if(wrapC) wrapC.addEventListener("click", onCopyClick);
     var fc=$("sheetFilterClear");
     if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
+  }
+  function freezeSheet(id){
+    var t=topicById(id);
+    if(!t || !t.sheetCache || !t.sheetCache.rows || !t.sheetCache.rows.length){ toast("沒有可固定的內容，先讀取一次"); return; }
+    t.frozenUrl=t.sheetUrl; t.frozenTab=t.sheetTab||"";   // 記住來源，方便日後重新連動
+    t.sheetUrl=""; t.sheetTab="";
+    if(t.sheetCache) t.sheetCache.seed=false;
+    save(); renderHome();
+    toast("已轉成固定，資料2 不再連動");
+  }
+  function relinkSheet(id){
+    var t=topicById(id);
+    if(!t) return;
+    if(t.frozenUrl){ t.sheetUrl=t.frozenUrl; t.sheetTab=t.frozenTab||""; }
+    save(); renderHome(); maybeSync(id);
+    toast("已重新接回連動");
   }
   function syncViaCsv(id){
     var t=topicById(id);
