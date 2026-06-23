@@ -6,7 +6,7 @@
 <title>頭腦備份站</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* 可愛圓體（jf-openhuninn），載入失敗會自動退回 Noto Sans TC */
@@ -27,12 +27,12 @@
     --danger:#ef6b6b;
     --shadow:0 2px 4px rgba(214,150,135,.10),0 10px 22px rgba(214,150,135,.14);
     --radius:20px;
-    --round:"jf-openhuninn","Noto Sans TC",system-ui,sans-serif;
+    --round:"Noto Sans TC","Noto Sans SC",system-ui,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{
-    font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    font-family:"Noto Sans TC","Noto Sans SC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
     background:
       radial-gradient(circle at 12% -5%, #ffe1d6 0, transparent 42%),
       radial-gradient(circle at 92% 4%, #d8f3ee 0, transparent 38%),
@@ -207,6 +207,20 @@
     padding:5px 6px;background:#fff;color:var(--ink);max-width:11em;cursor:pointer;font-weight:600;outline:none;
   }
   .cell-sel:focus{box-shadow:0 0 0 2px rgba(255,140,122,.4)}
+  td.editcell{padding:5px 6px}
+  .cell-edit{
+    width:100%;min-width:9em;border:1.5px solid var(--line);border-radius:8px;background:#fff;
+    font:inherit;font-size:13.5px;color:var(--ink);padding:6px 8px;outline:none;
+  }
+  .cell-edit:focus{border-color:var(--accent)}
+  td.mccell .mc-top{display:flex;align-items:center;gap:4px;justify-content:center}
+  td.mccell.has-anno{background:#dff3e2;border-left:4px solid #3fae5a}
+  td.mccell .mc-anno{margin-top:3px;font-size:12px;color:#2f7a42;font-weight:500;font-variant-numeric:normal}
+  .anno-btn{
+    border:none;background:transparent;cursor:pointer;color:#b8b0a3;font-size:13px;
+    padding:3px 5px;border-radius:8px;line-height:1;
+  }
+  .anno-btn:hover{background:#dff3e2;color:#2f7a42}
   td.amt span{margin-right:4px}
   .copy-btn{
     border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;
@@ -1110,12 +1124,15 @@
     var totalData=rows.length>0?rows.length-1:0;
     var shown=data.slice(0,MAX);
     var cols=0; [head].concat(shown.map(function(o){return o.row;})).forEach(function(r){ if(r.length>cols) cols=r.length; });
-    // 哪些欄要加複製鈕 / 下拉
-    var copyCol={}, dropCol={};
+    var annoMap = (topicById(curTopic)||{}).anno || {};
+    // 哪些欄要加複製鈕 / 下拉 / 可編輯 / 商戶
+    var copyCol={}, dropCol={}, editCol={}, mcCol={};
     var hdrRows=[rows[0]||[], rows[1]||[]];
     for(var c=0;c<cols;c++){
       var htrim=String(head[c]!=null?head[c]:"").trim();
       if(htrim==="内部"||htrim==="外部"||htrim==="內部") dropCol[c]=true;
+      if(/备注|備註/.test(htrim)) editCol[c]=true;
+      if(/商[户戶]|名[称稱]/.test(htrim)) mcCol[c]=true;
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
         if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
@@ -1136,6 +1153,16 @@
         var sv=String(val).trim();
         if(dropCol[k2]){
           h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2)+'</td>';
+        }else if(editCol[k2]){
+          h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="備註…"></td>';
+        }else if(mcCol[k2]){
+          var an=annoMap[ridx]||"";
+          h+='<td class="amt mccell'+(an?' has-anno':'')+'">'
+           + '<div class="mc-top"><span>'+esc(val)+'</span>'
+           + (sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':'')
+           + '<button type="button" class="anno-btn" data-r="'+ridx+'" title="加註解">📝</button></div>'
+           + (an?'<div class="mc-anno">'+esc(an)+'</div>':'')
+           + '</td>';
         }else if(copyCol[k2] && sv!==""){
           h+='<td class="amt"><span>'+esc(val)+'</span>'
            + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
@@ -1191,15 +1218,35 @@
     else { sel.style.background=""; sel.style.color=""; sel.style.borderColor=""; }
   }
   function onCellChange(e){
-    var sel=e.target;
-    if(!sel || !sel.classList || !sel.classList.contains("cell-sel")) return;
+    var el=e.target;
+    if(!el || !el.classList) return;
+    var isSel=el.classList.contains("cell-sel"), isEdit=el.classList.contains("cell-edit");
+    if(!isSel && !isEdit) return;
     var t=topicById(curTopic); if(!t || !t.sheetCache || !t.sheetCache.rows) return;
-    var r=parseInt(sel.getAttribute("data-r"),10), c=parseInt(sel.getAttribute("data-c"),10);
+    var r=parseInt(el.getAttribute("data-r"),10), c=parseInt(el.getAttribute("data-c"),10);
     var rows=t.sheetCache.rows;
-    if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=sel.value; }
-    t.sheetCache.seed=false;   // 變成已編輯，之後不被內建快照覆蓋
+    if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=el.value; }
+    t.sheetCache.seed=false;
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
-    colorCellSel(sel);
+    if(isSel) colorCellSel(el);
+  }
+  function onWrapClick(e){
+    var cp=e.target.closest ? e.target.closest(".copy-btn") : null;
+    if(cp){ e.stopPropagation(); copyText(cp.getAttribute("data-copy")||"", cp); return; }
+    var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
+    if(ab){
+      e.stopPropagation();
+      var t=topicById(curTopic); if(!t) return;
+      if(!t.anno) t.anno={};
+      var r=ab.getAttribute("data-r"), cur=t.anno[r]||"";
+      var v=window.prompt("加註解（清空後確定＝移除）：", cur);
+      if(v===null) return;
+      v=v.trim();
+      if(v) t.anno[r]=v; else delete t.anno[r];
+      if(t.sheetCache) t.sheetCache.seed=false;
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
+      renderHome();
+    }
   }
   function clockStr(ts){
     var d=new Date(ts), p=function(n){return(n<10?"0":"")+n;};
@@ -1290,7 +1337,7 @@
       if(!fi.value && cl){ renderSheetBlock(t); $("sheetFilter").focus(); }
     });
     var wrapC=$("sheetTableWrap");
-    if(wrapC){ wrapC.addEventListener("click", onCopyClick); wrapC.addEventListener("change", onCellChange); }
+    if(wrapC){ wrapC.addEventListener("click", onWrapClick); wrapC.addEventListener("change", onCellChange); }
     var fc=$("sheetFilterClear");
     if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
   }
