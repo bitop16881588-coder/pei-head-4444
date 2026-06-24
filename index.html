@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.7.0/style.css">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* 可愛圓體（jf-openhuninn），載入失敗會自動退回 Noto Sans TC */
@@ -70,6 +71,68 @@
     transition:.14s;
   }
   .ghost-btn:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-1px)}
+
+  /* 便條紙「今日头条」 */
+  .memo-note{
+    --m-bg1:#fff6c9;--m-bg2:#ffe9a8;--m-line:rgba(214,150,135,.10);--m-border:#f4d98a;--m-title:#a6701f;--m-text:#6b5326;--m-ph:#c2a25f;
+    position:relative;margin:0 0 16px;padding:13px 16px 12px;max-width:460px;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 28px, var(--m-line) 28px 29px),
+      linear-gradient(160deg,var(--m-bg1),var(--m-bg2));
+    border:1px solid var(--m-border);border-radius:4px 16px 16px 4px;
+    box-shadow:0 10px 24px rgba(120,100,60,.22), inset 0 1px 0 rgba(255,255,255,.6);
+    transform:rotate(-.6deg);transform-origin:left center;
+    animation:memoIn .85s cubic-bezier(.18,.9,.25,1.15) both;
+  }
+  .memo-note.c-pink{--m-bg1:#ffe2ec;--m-bg2:#ffc9d9;--m-line:rgba(193,77,110,.12);--m-border:#f3b6c8;--m-title:#c14d6e;--m-text:#8a3a52;--m-ph:#d98aa0}
+  .memo-note.c-blue{--m-bg1:#dcecff;--m-bg2:#bcdcff;--m-line:rgba(47,111,176,.12);--m-border:#a9cdee;--m-title:#2f6fb0;--m-text:#2f5a8a;--m-ph:#7ba6d4}
+  .memo-note.c-green{--m-bg1:#dcf3e4;--m-bg2:#bce6cc;--m-line:rgba(47,138,82,.12);--m-border:#a9ddbb;--m-title:#2f8a52;--m-text:#2f6b46;--m-ph:#7fc39a}
+  @keyframes memoIn{
+    0%{opacity:0;transform:translateX(-120%) rotate(-8deg) scale(.96)}
+    60%{opacity:1;transform:translateX(14px) rotate(1.5deg) scale(1.01)}
+    100%{opacity:1;transform:translateX(0) rotate(-.6deg) scale(1)}
+  }
+  .memo-tape{
+    position:absolute;top:-9px;left:42px;transform:rotate(-3deg);
+    width:78px;height:20px;background:rgba(255,255,255,.55);
+    border:1px solid rgba(180,150,90,.25);border-radius:2px;box-shadow:0 2px 5px rgba(0,0,0,.08);
+  }
+  .memo-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;cursor:move;touch-action:none}
+  .memo-head button,.memo-head .mc-dot{cursor:pointer}
+  .memo-pin{font-size:16px;cursor:grab}
+  .memo-title{font-family:var(--round);font-weight:700;font-size:17px;color:var(--m-title);letter-spacing:1px}
+  .memo-date{font-size:12px;color:var(--m-title);opacity:.75;font-weight:600}
+  .memo-flex{flex:1}
+  .memo-colors{display:flex;gap:4px;margin-right:2px}
+  .mc-dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .mc-dot.c-yellow{background:#ffd95e}
+  .mc-dot.c-pink{background:#ff9db8}
+  .mc-dot.c-blue{background:#8fbef0}
+  .mc-dot.c-green{background:#86d6a4}
+  .mc-dot.sel{outline:2px solid rgba(90,74,68,.4);outline-offset:1px}
+  .memo-hide{
+    border:none;background:rgba(90,74,68,.12);color:var(--m-title);font:inherit;font-weight:700;
+    width:22px;height:22px;border-radius:7px;cursor:pointer;line-height:1;
+  }
+  .memo-hide:hover{background:rgba(90,74,68,.22)}
+  .memo-clear{
+    border:none;background:rgba(90,74,68,.12);color:var(--m-title);font:inherit;font-size:12px;font-weight:600;
+    padding:3px 9px;border-radius:7px;cursor:pointer;line-height:1.4;
+  }
+  .memo-clear:hover{background:rgba(90,74,68,.22)}
+  .memo-clear.armed{background:#ef6b6b;color:#fff}
+  #memoBody{
+    width:100%;min-height:52px;border:none;outline:none;resize:vertical;background:transparent;
+    font-family:"LXGW WenKai TC","jf-openhuninn","Noto Sans TC","Noto Sans SC",sans-serif;
+    font-size:17px;line-height:31px;color:var(--m-text);padding:0;letter-spacing:.5px;
+  }
+  #memoBody::placeholder{color:var(--m-ph);font-family:"LXGW WenKai TC","jf-openhuninn","Noto Sans TC",sans-serif}
+  .memo-title,.memo-show{font-family:"jf-openhuninn","Noto Sans TC",sans-serif}
+  .memo-show{
+    display:block;margin:0 0 16px;border:1.5px dashed #e6bd5e;background:#fff8de;color:#a6701f;
+    font:inherit;font-weight:700;border-radius:12px;padding:8px 14px;cursor:pointer;
+  }
+  .memo-show:hover{background:#fff1c2}
 
   /* bookmark bar of topics */
   .bookmark-bar{
@@ -494,6 +557,25 @@
       <button class="ghost-btn" id="exportBtn">匯出</button>
       <button class="ghost-btn" id="importBtn">匯入</button>
     </header>
+    <div id="memoNote" class="memo-note c-yellow">
+      <div class="memo-tape"></div>
+      <div class="memo-head">
+        <span class="memo-pin">📌</span>
+        <span class="memo-title">今日头条</span>
+        <span class="memo-date" id="memoDate"></span>
+        <span class="memo-flex"></span>
+        <div class="memo-colors">
+          <button class="mc-dot c-yellow" data-c="yellow" title="黃"></button>
+          <button class="mc-dot c-pink" data-c="pink" title="粉"></button>
+          <button class="mc-dot c-blue" data-c="blue" title="藍"></button>
+          <button class="mc-dot c-green" data-c="green" title="綠"></button>
+        </div>
+        <button id="memoClear" class="memo-clear" title="清空內容">清空</button>
+        <button id="memoHide" class="memo-hide" title="收合">－</button>
+      </div>
+      <textarea id="memoBody" placeholder="今天的重點、提醒、頭條…寫在這～"></textarea>
+    </div>
+    <button id="memoShow" class="memo-show hidden">📌 今日头条</button>
     <div id="topicGrid" class="bookmark-bar"></div>
 
     <div id="homeEmpty" class="empty hidden">
@@ -1845,6 +1927,113 @@
     setTimeout(function(){ try{ $("gateInput").focus(); }catch(e){} }, 100);
   }
   initGate();
+
+  /* 便條紙「今日头条」 */
+  (function(){
+    var MEMO_KEY="shixiang_memo", MEMO_HIDE="shixiang_memo_hide", MEMO_COLOR="shixiang_memo_color";
+    var note=$("memoNote"), body=$("memoBody"), show=$("memoShow"), hideBtn=$("memoHide"), dateEl=$("memoDate");
+    if(!note||!body) return;
+    // 日期
+    var d=new Date(), wk=["週日","週一","週二","週三","週四","週五","週六"][d.getDay()];
+    if(dateEl) dateEl.textContent=(d.getMonth()+1)+"月"+d.getDate()+"日 "+wk;
+    // 內容
+    try{ body.value=localStorage.getItem(MEMO_KEY)||""; }catch(e){}
+    // 顏色
+    var COLORS=["yellow","pink","blue","green"], color="yellow";
+    try{ var sc=localStorage.getItem(MEMO_COLOR); if(COLORS.indexOf(sc)>-1) color=sc; }catch(e){}
+    function applyColor(){
+      COLORS.forEach(function(c){ note.classList.remove("c-"+c); });
+      note.classList.add("c-"+color);
+      var dots=note.querySelectorAll(".mc-dot");
+      for(var i=0;i<dots.length;i++) dots[i].classList.toggle("sel", dots[i].getAttribute("data-c")===color);
+    }
+    applyColor();
+    note.querySelectorAll(".mc-dot").forEach(function(dot){
+      dot.addEventListener("click", function(){
+        color=dot.getAttribute("data-c");
+        try{ localStorage.setItem(MEMO_COLOR,color); }catch(e){}
+        applyColor();
+      });
+    });
+    var POS_KEY="shixiang_memo_pos";
+    var savedPos=null; try{ var pp=JSON.parse(localStorage.getItem(POS_KEY)||"null"); if(pp&&typeof pp.left==="number") savedPos=pp; }catch(e){}
+    var hidden=false; try{ hidden=localStorage.getItem(MEMO_HIDE)==="1"; }catch(e){}
+    function curEl(){ return hidden ? show : note; }
+    function applyPos(){
+      var el=curEl();
+      el.style.position="fixed"; el.style.margin="0"; el.style.zIndex="150";
+      if(el===note && savedPos){ el.style.left=savedPos.left+"px"; el.style.top=savedPos.top+"px"; return; }
+      var cb=$("calcBtn"), w=el.offsetWidth||120;
+      if(cb){
+        var r=cb.getBoundingClientRect();
+        el.style.left=Math.max(8, r.left-12-w)+"px";
+        el.style.top=Math.max(6, r.top)+"px";
+      }else{
+        el.style.top="84px";
+        el.style.left=Math.max(8,(window.innerWidth-235)-12-w)+"px";
+      }
+    }
+    function applyVis(){
+      if(hidden){ note.classList.add("hidden"); show.classList.remove("hidden"); }
+      else{ note.classList.remove("hidden"); show.classList.add("hidden"); }
+      applyPos();
+    }
+    applyVis();
+    window.addEventListener("resize", applyPos);
+    var saveT=null;
+    body.addEventListener("input", function(){
+      clearTimeout(saveT);
+      saveT=setTimeout(function(){ try{ localStorage.setItem(MEMO_KEY, body.value); }catch(e){} }, 250);
+    });
+    body.addEventListener("blur", function(){ try{ localStorage.setItem(MEMO_KEY, body.value); }catch(e){} });
+    hideBtn.addEventListener("click", function(){ hidden=true; try{ localStorage.setItem(MEMO_HIDE,"1"); }catch(e){} applyVis(); });
+    show.addEventListener("click", function(){
+      hidden=false; try{ localStorage.setItem(MEMO_HIDE,"0"); }catch(e){}
+      applyVis();
+      note.style.animation="none"; void note.offsetWidth; note.style.animation="";
+    });
+    // 清空（兩段確認）
+    var clearBtn=$("memoClear");
+    if(clearBtn) clearBtn.addEventListener("click", function(){
+      if(clearBtn.classList.contains("armed")){
+        body.value=""; try{ localStorage.setItem(MEMO_KEY,""); }catch(e){}
+        clearBtn.classList.remove("armed"); clearBtn.textContent="清空"; body.focus();
+      }else{
+        clearBtn.classList.add("armed"); clearBtn.textContent="確定清空?";
+        setTimeout(function(){ clearBtn.classList.remove("armed"); clearBtn.textContent="清空"; }, 2200);
+      }
+    });
+    // 拖移便條紙到任意位置
+    var head=note.querySelector(".memo-head"), drag=false,dx=0,dy=0;
+    head.addEventListener("pointerdown", function(e){
+      if(e.target.closest("button,.mc-dot,textarea")) return;
+      drag=true;
+      var r=note.getBoundingClientRect();
+      note.style.position="fixed"; note.style.left=r.left+"px"; note.style.top=r.top+"px"; note.style.margin="0"; note.style.zIndex="150";
+      dx=e.clientX-r.left; dy=e.clientY-r.top;
+      try{ head.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    head.addEventListener("pointermove", function(e){
+      if(!drag) return;
+      var x=e.clientX-dx, y=e.clientY-dy;
+      x=Math.max(4,Math.min(x,window.innerWidth-note.offsetWidth-4));
+      y=Math.max(4,Math.min(y,window.innerHeight-note.offsetHeight-4));
+      note.style.left=x+"px"; note.style.top=y+"px";
+    });
+    function endDrag(){ if(!drag) return; drag=false;
+      savedPos={left:parseInt(note.style.left,10), top:parseInt(note.style.top,10)};
+      try{ localStorage.setItem(POS_KEY, JSON.stringify(savedPos)); }catch(e){}
+    }
+    head.addEventListener("pointerup", endDrag);
+    head.addEventListener("pointercancel", endDrag);
+    // 雙擊釘子→復位到計算機左邊
+    var pin=note.querySelector(".memo-pin");
+    if(pin) pin.addEventListener("dblclick", function(){
+      savedPos=null; try{ localStorage.removeItem(POS_KEY); }catch(e){}
+      applyPos();
+      note.style.animation="none"; void note.offsetWidth; note.style.animation="";
+    });
+  })();
 
   /* 註解提示小卡片（馬上浮出、支援換行） */
   var annoTip=document.createElement("div");
