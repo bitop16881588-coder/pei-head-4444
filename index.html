@@ -208,6 +208,15 @@
   }
   .cell-sel:focus{box-shadow:0 0 0 2px rgba(255,140,122,.4)}
   td.editcell{padding:5px 6px}
+  td.togglecell{padding:5px}
+  .st-toggle{
+    border:none;cursor:pointer;font:inherit;font-size:14px;font-weight:700;
+    border-radius:.55em;padding:.25em .6em;min-width:2em;line-height:1.4;transition:filter .1s;
+  }
+  .st-toggle.st-yes{background:#dcefe0;color:#1f7a3a}
+  .st-toggle.st-no{background:#f6e0db;color:#c0492f}
+  .st-toggle.st-none{background:#f0ece6;color:#b5ada3}
+  .st-toggle:hover{filter:brightness(.95)}
   .cell-edit{
     width:100%;min-width:9em;border:1.5px solid var(--line);border-radius:8px;background:#fff;
     font:inherit;font-size:13.5px;color:var(--ink);padding:6px 8px;outline:none;
@@ -1164,14 +1173,18 @@
       if(!any){ for(var rr2=0;rr2<shown.length;rr2++){ if(String(shown[rr2].row[cc]!=null?shown[rr2].row[cc]:"").trim()!==""){ any=true; break; } } }
       showCol[cc]=any;
     }
-    // 哪些欄要加複製鈕 / 下拉 / 可編輯 / 商戶（下拉、編輯、註解只在「开关」啟用）
-    var copyCol={}, dropCol={}, editCol={}, mcCol={};
+    // 欄位類型（下拉/可編輯/商戶/✓✕切換 只在「开关」啟用）
+    var copyCol={}, dropCol={}, editCol={}, mcCol={}, toggleCol={}, timeCol={};
     var hdrRows=[rows[0]||[], rows[1]||[]];
     for(var c=0;c<cols;c++){
       var htrim=String(head[c]!=null?head[c]:"").trim();
-      if(isSwitch && (htrim==="内部"||htrim==="外部"||htrim==="內部")) dropCol[c]=true;
-      if(isSwitch && /备注|備註/.test(htrim)) editCol[c]=true;
-      if(isSwitch && /商[户戶]|名[称稱]/.test(htrim)) mcCol[c]=true;
+      if(isSwitch){
+        if(htrim==="内部"||htrim==="外部"||htrim==="內部") dropCol[c]=true;
+        else if(/商[户戶]|名[称稱]/.test(htrim)) mcCol[c]=true;
+        else if(htrim==="出款"||htrim==="下发"||htrim==="下發") toggleCol[c]=true;
+        else if(/下发时间|下發時間/.test(htrim)) timeCol[c]=true;
+        else if(htrim!=="") editCol[c]=true;   // 放置金 / 备注 等其餘欄→可填寫
+      }
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
         if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
@@ -1197,13 +1210,27 @@
             var lc=cellColor(sv), ls=lc?(' style="background:'+lc+';color:'+textOn(lc)+'"'):'';
             h+='<td class="dropcell"><span class="cell-static"'+ls+'>'+esc(sv||"—")+'</span></td>';
           }else{
-            h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2)+'</td>';
+            h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2, CELL_OPTIONS)+'</td>';
+          }
+        }else if(timeCol[k2]){
+          if(locked){
+            var tc=cellColor(sv), ts=tc?(' style="background:'+tc+';color:'+textOn(tc)+'"'):'';
+            h+='<td class="dropcell"><span class="cell-static'+(tc?'':' plain')+'"'+ts+'>'+(sv?esc(sv):"—")+'</span></td>';
+          }else{
+            h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2, TIME_OPTIONS)+'</td>';
+          }
+        }else if(toggleCol[k2]){
+          var isYes = /^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(sv);
+          if(locked){
+            h+='<td>'+(isYes?'<span class="st-yes">✓</span>':'<span class="st-no">✕</span>')+'</td>';
+          }else{
+            h+='<td class="togglecell"><button type="button" class="st-toggle '+(isYes?'st-yes':'st-no')+'" data-r="'+ridx+'" data-c="'+k2+'" title="點一下切換">'+(isYes?'✓':'✕')+'</button></td>';
           }
         }else if(editCol[k2]){
           if(locked){
             h+='<td class="editcell"><span class="cell-static plain">'+(sv?esc(val):"—")+'</span></td>';
           }else{
-            h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="備註…"></td>';
+            h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
           }
         }else if(mcCol[k2]){
           var an=annoMap[ridx]||"";
@@ -1251,23 +1278,40 @@
     {t:"等老师通知开启", c:"#a9cdee"},
     {t:"代付不顺", c:"#e0852b"}
   ];
-  function cellColor(v){ for(var i=0;i<CELL_OPTIONS.length;i++){ if(CELL_OPTIONS[i].t===v) return CELL_OPTIONS[i].c; } return ""; }
+  var TIME_OPTIONS = [
+    {t:"", c:""},
+    {t:"上午9点", c:""},
+    {t:"要核对", c:""},
+    {t:"清空 不用核对", c:"#bfe3cf"},
+    {t:"下发单间需满人民币2A", c:"#d9c7ec"},
+    {t:"下发单间需满5000U", c:"#e89a9a"},
+    {t:"下发单间需满3000U", c:"#b6d7a8"},
+    {t:"下发单间需满2000U", c:"#f6b26b"},
+    {t:"下发单间需满1500U", c:"#b51d24"},
+    {t:"下发单间需满1000U", c:"#d9d2e9"}
+  ];
+  function cellColor(v){
+    var all=CELL_OPTIONS.concat(TIME_OPTIONS);
+    for(var i=0;i<all.length;i++){ if(all[i].t===v && all[i].c) return all[i].c; }
+    return "";
+  }
   function textOn(hex){
     if(!hex) return "";
     var h=hex.replace("#",""); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
     var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
     return (0.299*r+0.587*g+0.114*b)>150 ? "#3a2f2a" : "#ffffff";
   }
-  function buildCellSelect(val, r, c){
-    var cur=String(val==null?"":val), opts="", known=false;
-    CELL_OPTIONS.forEach(function(o){
+  function buildCellSelect(val, r, c, opts){
+    opts = opts || CELL_OPTIONS;
+    var cur=String(val==null?"":val), out="", known=false;
+    opts.forEach(function(o){
       if(o.t===cur) known=true;
-      opts+='<option value="'+esc(o.t)+'"'+(o.t===cur?" selected":"")+'>'+(o.t===""?"—":esc(o.t))+'</option>';
+      out+='<option value="'+esc(o.t)+'"'+(o.t===cur?" selected":"")+'>'+(o.t===""?"—":esc(o.t))+'</option>';
     });
-    if(cur!=="" && !known) opts='<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>'+opts;
+    if(cur!=="" && !known) out='<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>'+out;
     var col=cellColor(cur), style="";
     if(col) style=' style="background:'+col+';color:'+textOn(col)+';border-color:'+col+'"';
-    return '<select class="cell-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+opts+'</select>';
+    return '<select class="cell-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
   }
   function colorCellSel(sel){
     var col=cellColor(sel.value);
@@ -1288,6 +1332,19 @@
     if(isSel) colorCellSel(el);
   }
   function onWrapClick(e){
+    var tg=e.target.closest ? e.target.closest(".st-toggle") : null;
+    if(tg){
+      e.stopPropagation();
+      var t=topicById(curTopic); if(!t || !t.sheetCache) return;
+      var r=parseInt(tg.getAttribute("data-r"),10), c=parseInt(tg.getAttribute("data-c"),10);
+      var rows=t.sheetCache.rows, cur=String((rows[r]||[])[c]!=null?(rows[r]||[])[c]:"").trim();
+      var next = /^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(cur) ? "✕" : "✓";
+      if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=next; }
+      t.sheetCache.seed=false;
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
+      renderHome();
+      return;
+    }
     var cp=e.target.closest ? e.target.closest(".copy-btn") : null;
     if(cp){ e.stopPropagation(); copyText(cp.getAttribute("data-copy")||"", cp); return; }
     var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
