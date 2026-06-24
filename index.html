@@ -214,13 +214,42 @@
   }
   .cell-edit:focus{border-color:var(--accent)}
   td.mccell .mc-top{display:flex;align-items:center;gap:4px;justify-content:center}
-  td.mccell.has-anno{background:#dff3e2;border-left:4px solid #3fae5a}
-  td.mccell .mc-anno{margin-top:3px;font-size:12px;color:#2f7a42;font-weight:500;font-variant-numeric:normal}
+  td.mccell{position:relative;padding-top:8px}
+  .anno-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:#3fae5a;box-shadow:0 0 0 2px #d2f0d9}
   .anno-btn{
-    border:none;background:transparent;cursor:pointer;color:#b8b0a3;font-size:13px;
-    padding:3px 5px;border-radius:8px;line-height:1;
+    position:absolute;top:3px;right:3px;
+    border:none;background:transparent;cursor:pointer;color:#cdbdae;font-size:12px;
+    padding:2px 4px;border-radius:7px;line-height:1;opacity:.75;
   }
-  .anno-btn:hover{background:#dff3e2;color:#2f7a42}
+  .anno-btn:hover{background:#dff3e2;color:#2f7a42;opacity:1}
+  .anno-btn.has{opacity:1;background:transparent}
+  .anno-btn.has::before{content:"";display:block;width:9px;height:9px;border-radius:50%;background:#3fae5a;box-shadow:0 0 0 2px #d2f0d9}
+  .anno-btn.has:hover{background:#dff3e2}
+  textarea.anno-edit{
+    width:100%;margin-top:5px;border:1.5px solid #3fae5a;border-radius:10px;background:#fff;
+    font:inherit;font-size:13px;color:var(--ink);padding:6px 9px;outline:none;resize:vertical;
+    line-height:1.5;font-variant-numeric:normal;min-height:2.6em;
+  }
+  .anno-tip{
+    position:fixed;z-index:1200;max-width:260px;pointer-events:none;
+    background:#fffaf6;border:2px solid #ffd9cb;border-radius:14px;
+    box-shadow:0 10px 28px rgba(214,150,135,.3);
+    padding:9px 12px;font-size:13px;line-height:1.55;color:var(--ink);
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .anno-tip::after{
+    content:"";position:absolute;left:50%;margin-left:-7px;bottom:-9px;
+    border:7px solid transparent;border-top-color:#ffd9cb;
+  }
+  .anno-tip.below::after{bottom:auto;top:-9px;border-top-color:transparent;border-bottom-color:#ffd9cb}
+  .cell-static{display:inline-block;padding:5px 9px;border-radius:8px;background:#f3ece2;color:var(--ink);font-weight:600;font-size:13.5px}
+  .cell-static.plain{background:transparent;font-weight:400}
+  .mini-btn.locked-on{background:#ffe2d8;color:#c0492f;border-color:#ffc9ba}
+  .anno-edit{
+    width:100%;margin-top:5px;border:1.5px solid #3fae5a;border-radius:8px;background:#fff;
+    font:inherit;font-size:13px;color:var(--ink);padding:5px 8px;outline:none;font-variant-numeric:normal;
+  }
+  td.mccell.editing{background:#eafaee}
   td.amt span{margin-right:4px}
   .copy-btn{
     border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;
@@ -707,6 +736,7 @@
   var pendingDelTopic = false;
   var sheetSync = {};         // topicId -> {loading, error} (transient, not saved)
   var sheetFilters = {};      // topicId -> 篩選關鍵字 (transient)
+  var annoEditing = null;     // 正在輸入註解的列 idx (字串)
 
   /* ---------- storage ---------- */
   function applyPinned(d){
@@ -1125,14 +1155,23 @@
     var shown=data.slice(0,MAX);
     var cols=0; [head].concat(shown.map(function(o){return o.row;})).forEach(function(r){ if(r.length>cols) cols=r.length; });
     var annoMap = (topicById(curTopic)||{}).anno || {};
-    // 哪些欄要加複製鈕 / 下拉 / 可編輯 / 商戶
+    var isSwitch = ((topicById(curTopic)||{}).name === SWITCH_NAME);
+    var locked = !!(topicById(curTopic)||{}).locked;
+    // 隱藏完全空白的欄（表頭與全部資料皆空）
+    var showCol=[];
+    for(var cc=0;cc<cols;cc++){
+      var any=String(head[cc]!=null?head[cc]:"").trim()!=="";
+      if(!any){ for(var rr2=0;rr2<shown.length;rr2++){ if(String(shown[rr2].row[cc]!=null?shown[rr2].row[cc]:"").trim()!==""){ any=true; break; } } }
+      showCol[cc]=any;
+    }
+    // 哪些欄要加複製鈕 / 下拉 / 可編輯 / 商戶（下拉、編輯、註解只在「开关」啟用）
     var copyCol={}, dropCol={}, editCol={}, mcCol={};
     var hdrRows=[rows[0]||[], rows[1]||[]];
     for(var c=0;c<cols;c++){
       var htrim=String(head[c]!=null?head[c]:"").trim();
-      if(htrim==="内部"||htrim==="外部"||htrim==="內部") dropCol[c]=true;
-      if(/备注|備註/.test(htrim)) editCol[c]=true;
-      if(/商[户戶]|名[称稱]/.test(htrim)) mcCol[c]=true;
+      if(isSwitch && (htrim==="内部"||htrim==="外部"||htrim==="內部")) dropCol[c]=true;
+      if(isSwitch && /备注|備註/.test(htrim)) editCol[c]=true;
+      if(isSwitch && /商[户戶]|名[称稱]/.test(htrim)) mcCol[c]=true;
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
         if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
@@ -1140,6 +1179,7 @@
     }
     var h='<div class="sheet-scroll"><table class="sheet-tbl"><thead><tr>';
     for(var k=0;k<cols;k++){
+      if(!showCol[k]) continue;
       var ht=String(head[k]!=null?head[k]:"");
       var thc = /[内內]部/.test(ht) ? ' class="g-in"' : (/外部/.test(ht) ? ' class="g-out"' : '');
       h+='<th'+thc+'>'+esc(ht)+'</th>';
@@ -1149,20 +1189,37 @@
       var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
       h+='<tr>';
       for(var k2=0;k2<cols;k2++){
+        if(!showCol[k2]) continue;
         var val=rowArr[k2]!=null?rowArr[k2]:"";
         var sv=String(val).trim();
         if(dropCol[k2]){
-          h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2)+'</td>';
+          if(locked){
+            var lc=cellColor(sv), ls=lc?(' style="background:'+lc+';color:'+textOn(lc)+'"'):'';
+            h+='<td class="dropcell"><span class="cell-static"'+ls+'>'+esc(sv||"—")+'</span></td>';
+          }else{
+            h+='<td class="dropcell">'+buildCellSelect(val, ridx, k2)+'</td>';
+          }
         }else if(editCol[k2]){
-          h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="備註…"></td>';
+          if(locked){
+            h+='<td class="editcell"><span class="cell-static plain">'+(sv?esc(val):"—")+'</span></td>';
+          }else{
+            h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="備註…"></td>';
+          }
         }else if(mcCol[k2]){
           var an=annoMap[ridx]||"";
-          h+='<td class="amt mccell'+(an?' has-anno':'')+'">'
-           + '<div class="mc-top"><span>'+esc(val)+'</span>'
-           + (sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':'')
-           + '<button type="button" class="anno-btn" data-r="'+ridx+'" title="加註解">📝</button></div>'
-           + (an?'<div class="mc-anno">'+esc(an)+'</div>':'')
-           + '</td>';
+          var copyB=(sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':"");
+          if(locked){
+            h+='<td class="amt mccell">'
+             + (an?'<span class="anno-dot" data-r="'+ridx+'"></span>':'')
+             + '<div class="mc-top"><span>'+esc(val)+'</span>'+copyB+'</div></td>';
+          }else{
+            var editing=(annoEditing===String(ridx));
+            h+='<td class="amt mccell'+(editing?' editing':'')+'">'
+             + '<button type="button" class="anno-btn'+(an?' has':'')+'" data-r="'+ridx+'"'+(an?'':' title="加註解"')+'>'+(an?'':'📝')+'</button>'
+             + '<div class="mc-top"><span>'+esc(val)+'</span>'+copyB+'</div>'
+             + (editing?'<textarea class="anno-edit" data-r="'+ridx+'" rows="2" placeholder="輸入註解（可換行），點別處儲存">'+esc(an)+'</textarea>':'')
+             + '</td>';
+          }
         }else if(copyCol[k2] && sv!==""){
           h+='<td class="amt"><span>'+esc(val)+'</span>'
            + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
@@ -1236,17 +1293,23 @@
     var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
     if(ab){
       e.stopPropagation();
-      var t=topicById(curTopic); if(!t) return;
-      if(!t.anno) t.anno={};
-      var r=ab.getAttribute("data-r"), cur=t.anno[r]||"";
-      var v=window.prompt("加註解（清空後確定＝移除）：", cur);
-      if(v===null) return;
-      v=v.trim();
-      if(v) t.anno[r]=v; else delete t.anno[r];
-      if(t.sheetCache) t.sheetCache.seed=false;
-      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
+      annoEditing=String(ab.getAttribute("data-r"));
       renderHome();
+      setTimeout(function(){
+        var inp=document.querySelector('.anno-edit[data-r="'+annoEditing+'"]');
+        if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+      }, 30);
     }
+  }
+  function commitAnno(input){
+    var t=topicById(curTopic); if(!t){ annoEditing=null; return; }
+    if(!t.anno) t.anno={};
+    var r=input.getAttribute("data-r"), v=input.value.trim();
+    if(v) t.anno[r]=v; else delete t.anno[r];
+    if(t.sheetCache) t.sheetCache.seed=false;
+    annoEditing=null;
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
+    renderHome();
   }
   function clockStr(ts){
     var d=new Date(ts), p=function(n){return(n<10?"0":"")+n;};
@@ -1295,8 +1358,10 @@
        + '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button></div>';
     }else{
       h='<div class="sheet-bar"><span class="sheet-title">📌 固定資料</span>'
-       + '<span class="sheet-meta">不連動</span>'
-       + '<button class="mini-btn" id="sheetRelink" title="重新接回試算表連動">↻ 重新連動</button></div>';
+       + '<span class="sheet-meta">不連動'+(t.locked?' · 🔒 已鎖定':'')+'</span>'
+       + '<button class="mini-btn'+(t.locked?' locked-on':'')+'" id="sheetLock">'+(t.locked?'🔒 已鎖定':'🔓 鎖定')+'</button>'
+       + (t.locked?'':'<button class="mini-btn" id="sheetRelink" title="重新接回試算表連動">↻ 重新連動</button>')
+       + '</div>';
     }
     if(hasData){
       h+='<div class="sheet-search"><span class="ss-ic">🔍</span>'
@@ -1326,6 +1391,11 @@
     if(fz) fz.addEventListener("click", function(){ freezeSheet(t.id); });
     var rl=$("sheetRelink");
     if(rl) rl.addEventListener("click", function(){ relinkSheet(t.id); });
+    var lk=$("sheetLock");
+    if(lk) lk.addEventListener("click", function(){
+      t.locked=!t.locked; annoEditing=null; save(); renderHome();
+      toast(t.locked?"已鎖定，內容不可更改":"已解鎖，可以編輯");
+    });
     var fi=$("sheetFilter");
     if(fi) fi.addEventListener("input", function(){
       sheetFilters[t.id]=fi.value;
@@ -1337,7 +1407,20 @@
       if(!fi.value && cl){ renderSheetBlock(t); $("sheetFilter").focus(); }
     });
     var wrapC=$("sheetTableWrap");
-    if(wrapC){ wrapC.addEventListener("click", onWrapClick); wrapC.addEventListener("change", onCellChange); }
+    if(wrapC){
+      wrapC.addEventListener("click", onWrapClick);
+      wrapC.addEventListener("change", onCellChange);
+      wrapC.addEventListener("keydown", function(e){
+        if(e.target && e.target.classList && e.target.classList.contains("anno-edit")){
+          if(e.key==="Escape"){ annoEditing=null; renderHome(); }
+        }
+      });
+      wrapC.addEventListener("focusout", function(e){
+        if(e.target && e.target.classList && e.target.classList.contains("anno-edit") && annoEditing!==null){
+          commitAnno(e.target);
+        }
+      });
+    }
     var fc=$("sheetFilterClear");
     if(fc) fc.addEventListener("click", function(){ sheetFilters[t.id]=""; renderSheetBlock(t); });
   }
@@ -1705,6 +1788,35 @@
     setTimeout(function(){ try{ $("gateInput").focus(); }catch(e){} }, 100);
   }
   initGate();
+
+  /* 註解提示小卡片（馬上浮出、支援換行） */
+  var annoTip=document.createElement("div");
+  annoTip.className="anno-tip"; annoTip.style.display="none";
+  document.body.appendChild(annoTip);
+  function showAnnoTip(el){
+    var r=el.getAttribute("data-r"); if(r===null) return;
+    var t=topicById(curTopic); if(!t || !t.anno) return;
+    var note=t.anno[r]; if(!note) return;
+    annoTip.textContent=note;
+    annoTip.style.display="block";
+    var rect=el.getBoundingClientRect();
+    var tw=annoTip.offsetWidth, th=annoTip.offsetHeight;
+    var top=rect.top-th-9, left=rect.left+rect.width/2-tw/2;
+    annoTip.classList.toggle("below", top<6);
+    if(top<6) top=rect.bottom+9;
+    left=Math.max(8, Math.min(left, window.innerWidth-tw-8));
+    annoTip.style.top=top+"px"; annoTip.style.left=left+"px";
+  }
+  function hideAnnoTip(){ annoTip.style.display="none"; }
+  document.addEventListener("mouseover", function(e){
+    var el=e.target.closest ? e.target.closest(".anno-dot,.anno-btn.has") : null;
+    if(el) showAnnoTip(el);
+  });
+  document.addEventListener("mouseout", function(e){
+    var el=e.target.closest ? e.target.closest(".anno-dot,.anno-btn.has") : null;
+    if(el) hideAnnoTip();
+  });
+  window.addEventListener("scroll", hideAnnoTip, true);
 
   /* ---------- events ---------- */
   $("editTopicBtn").addEventListener("click", function(){ openTopicModal("edit"); });
