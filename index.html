@@ -154,6 +154,8 @@
   }
   .bm:hover{background:var(--accent-soft);transform:translateY(-2px) scale(1.03)}
   .bm:active{transform:scale(.96)}
+  .bm{touch-action:none}
+  .bm.dragging{opacity:.65;transform:scale(1.06);box-shadow:0 8px 20px rgba(120,90,70,.28);z-index:20;cursor:grabbing}
   .bm.sel{background:var(--accent);color:#fff;box-shadow:0 6px 14px rgba(120,90,70,.22)}
   .bm.sel .lbl{color:#fff}
   .bm.sel .ic{background:rgba(255,255,255,.85)}
@@ -282,7 +284,7 @@
   table.sheet-tbl thead th.g-in{background:#d9ead3;color:#274e13}
   table.sheet-tbl thead th.g-out{background:#cfe2e6;color:#0c343d}
   table.sheet-tbl tbody td:first-child,table.sheet-tbl thead th:first-child{position:sticky;left:0;z-index:2;background:#fffaf6;box-shadow:1px 0 0 #e7ddcf}
-  table.sheet-tbl thead th:first-child{z-index:5;background:var(--accent-soft)}
+  table.sheet-tbl thead th:first-child{z-index:5}
   table.sheet-tbl tbody tr:nth-child(even){background:#fff8f5}
   td.amt{font-variant-numeric:tabular-nums;font-weight:600}
   /* 加减 美化 */
@@ -592,7 +594,7 @@
         <p>什麼資料都吃，重點自動吐出來</p>
       </div>
       <div class="spacer"></div>
-      <button class="ghost-btn" id="themeBtn" title="換主題色" style="padding:6px 10px;line-height:0">🎨</button>
+      <button class="ghost-btn" id="themeBtn" title="換主題色" style="padding:6px 10px;font-size:16px">🎨</button>
       <button class="ghost-btn" id="calcBtn" title="小計算機" style="padding:6px 10px;line-height:0">
         <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" aria-label="計算機">
           <rect x="3" y="1.6" width="18" height="20.8" rx="3" fill="#5b5f64"/>
@@ -946,6 +948,46 @@
   }
 
   /* ---------- render: home ---------- */
+  var bmDragged=false;
+  function setupBmDrag(grid){
+    if(grid._dragBound) return; grid._dragBound=true;
+    var dragEl=null, sx=0, sy=0, moved=false;
+    function onMove(e){
+      if(!dragEl) return;
+      if(!moved){
+        if(Math.abs(e.clientX-sx)<6 && Math.abs(e.clientY-sy)<6) return;
+        moved=true; dragEl.classList.add("dragging");
+      }
+      if(e.cancelable) e.preventDefault();
+      var tg=document.elementFromPoint(e.clientX, e.clientY);
+      var over=tg && tg.closest ? tg.closest(".bm") : null;
+      if(over && over!==dragEl && over.parentNode===grid){
+        var r=over.getBoundingClientRect();
+        var after=e.clientX > r.left + r.width/2;
+        grid.insertBefore(dragEl, after?over.nextSibling:over);
+      }
+    }
+    function onUp(){
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      if(dragEl && moved){
+        dragEl.classList.remove("dragging");
+        var ids=Array.prototype.map.call(grid.querySelectorAll(".bm"), function(b){ return b.getAttribute("data-id"); });
+        state.topics.sort(function(a,b){ return ids.indexOf(a.id)-ids.indexOf(b.id); });
+        save();
+        bmDragged=true;   // 抑制這次的 click
+      }
+      dragEl=null; moved=false;
+    }
+    grid.addEventListener("pointerdown", function(e){
+      if(e.button!=null && e.button!==0) return;
+      var el=e.target.closest ? e.target.closest(".bm") : null;
+      if(!el || el.parentNode!==grid) return;
+      dragEl=el; moved=false; sx=e.clientX; sy=e.clientY;
+      document.addEventListener("pointermove", onMove, {passive:false});
+      document.addEventListener("pointerup", onUp);
+    });
+  }
   function renderHome(){
     // 自動選取（沒選或選的已不存在時，選第一個）
     if(state.topics.length && !topicById(curTopic)) curTopic = state.topics[0].id;
@@ -970,9 +1012,13 @@
     $("panel").classList.toggle("hidden", !has);
 
     Array.prototype.forEach.call(grid.querySelectorAll(".bm"), function(el){
-      el.addEventListener("click", function(){ selectTopic(el.getAttribute("data-id")); });
+      el.addEventListener("click", function(){
+        if(bmDragged){ bmDragged=false; return; }   // 剛拖曳完，不觸發切換
+        selectTopic(el.getAttribute("data-id"));
+      });
     });
     $("addTopicCard").addEventListener("click", function(){ openTopicModal("add"); });
+    setupBmDrag(grid);
 
     if(has) renderTopic();
   }
@@ -991,6 +1037,7 @@
   function maybeSync(id){
     var t=topicById(id);
     if(!t || !t.sheetUrl) return;
+    if(t.locked) return;               // 鎖定中：不自動更新
     var fresh = t.sheetCache && (Date.now()-t.sheetCache.at < 30000);
     if(!fresh) syncSheet(id);
   }
@@ -1000,6 +1047,8 @@
     var t=topicById(id);
     if(!t || !t.sheetUrl) return;
     autoRefreshTimer = setInterval(function(){
+      var tt=topicById(id);
+      if(tt && tt.locked) return;      // 鎖定中：不自動刷新
       if(curTopic===id && document.visibilityState!=="hidden") syncSheet(id);
     }, AUTO_REFRESH_MS);
   }
@@ -1348,7 +1397,24 @@
         if(t==="") continue; if(/^(三方|金[额額])$/.test(t)) got=true; else return false; }
       return got;
     }
-    var h='<div class="sheet-scroll"><table class="sheet-tbl"><thead><tr>';
+    // 內部/外部 分區：淡綠/淡藍底＋中間粗分隔線
+    var tid="tbl"+Math.random().toString(36).slice(2,8);
+    var visG=[];
+    for(var vc=0;vc<cols;vc++){ if(!showCol[vc]) continue; var hh=String(head[vc]!=null?head[vc]:""); visG.push(/[内內]部/.test(hh)?"in":(/外部/.test(hh)?"out":"")); }
+    var inIdx=[],outIdx=[],divIdx=0;
+    for(var vi=0;vi<visG.length;vi++){ var ob1=vi+1;
+      if(visG[vi]==="in") inIdx.push(ob1);
+      if(visG[vi]==="out"){ outIdx.push(ob1); if(divIdx===0 && vi>0 && visG[vi-1]!=="out") divIdx=ob1; }
+    }
+    var styleStr="";
+    if(!isSwitch && (inIdx.length||outIdx.length)){
+      styleStr="<style>";
+      if(inIdx.length) styleStr+="#"+tid+" tbody td:nth-child("+inIdx.join("),#"+tid+" tbody td:nth-child(")+"){background:rgba(76,175,125,.06)}";
+      if(outIdx.length) styleStr+="#"+tid+" tbody td:nth-child("+outIdx.join("),#"+tid+" tbody td:nth-child(")+"){background:rgba(91,155,216,.06)}";
+      if(divIdx) styleStr+="#"+tid+" td:nth-child("+divIdx+"),#"+tid+" th:nth-child("+divIdx+"){border-left:3px solid #cdbfae}";
+      styleStr+="</style>";
+    }
+    var h=styleStr+'<div class="sheet-scroll"><table class="sheet-tbl" id="'+tid+'"><thead><tr>';
     for(var k=0;k<cols;k++){
       if(!showCol[k]) continue;
       var ht=String(head[k]!=null?head[k]:"");
@@ -1589,9 +1655,11 @@
                : (t.sheetCache && t.sheetCache.seed ? "內建快照 · 登入後更新"
                : (t.sheetCache ? ("上次更新 "+clockStr(t.sheetCache.at)) : "尚未讀取"));
       h='<div class="sheet-bar"><span class="sheet-title">📊 連動試算表</span>'
-       + '<span class="sheet-meta">'+meta+'</span>'
-       + (hasData?'<button class="mini-btn" id="sheetFreeze" title="把目前內容凍結成固定，不再連動">📌 轉固定</button>':'')
-       + '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button></div>';
+       + '<span class="sheet-meta">'+meta+(t.locked?' · 🔒 已鎖定':'')+'</span>'
+       + (t.locked?'' : (hasData?'<button class="mini-btn" id="sheetFreeze" title="把目前內容凍結成固定，不再連動">📌 轉固定</button>':''))
+       + (t.locked?'' : '<button class="mini-btn" id="sheetRefresh"'+(st.loading?" disabled":"")+'>重新整理</button>')
+       + '<button class="mini-btn'+(t.locked?' locked-on':'')+'" id="sheetLock" title="鎖定後不自動更新、不可轉固定">'+(t.locked?'🔒 已鎖定':'🔓 鎖定')+'</button>'
+       + '</div>';
     }else{
       h='<div class="sheet-bar"><span class="sheet-title">📌 固定資料</span>'
        + '<span class="sheet-meta">不連動'+(t.locked?' · 🔒 已鎖定':'')+'</span>'
@@ -2077,9 +2145,20 @@
     function applyPos(){
       var el=curEl();
       el.style.position="fixed"; el.style.margin="0"; el.style.zIndex="150";
-      if(el===note && savedPos){ el.style.left=savedPos.left+"px"; el.style.top=savedPos.top+"px"; return; }
-      var cb=$("calcBtn"), w=el.offsetWidth||120;
-      if(cb){
+      var w=el.offsetWidth||130, hgt=el.offsetHeight||40;
+      if(savedPos){   // 自己拖過位置→展開/收合都待在那
+        var L=Math.max(8, Math.min(savedPos.left, window.innerWidth-w-8));
+        var T=Math.max(6, Math.min(savedPos.top, window.innerHeight-hgt-8));
+        el.style.left=L+"px"; el.style.top=T+"px"; return;
+      }
+      var cb=$("calcBtn");
+      if(el===show){   // 收合膠囊：放在按鈕列「下方」靠右，不擋按鈕
+        var top = cb ? cb.getBoundingClientRect().bottom+10 : 84;
+        el.style.top=top+"px";
+        el.style.left=Math.max(8, window.innerWidth - w - 16)+"px";
+        return;
+      }
+      if(cb){          // 展開便條：錨在計算機左邊同排
         var r=cb.getBoundingClientRect();
         el.style.left=Math.max(8, r.left-12-w)+"px";
         el.style.top=Math.max(6, r.top)+"px";
