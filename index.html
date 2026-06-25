@@ -307,6 +307,9 @@
   .row-del:hover{background:#fbe1e1;color:#cf5b5b}
   .note-cell .note-inp{min-width:240px}
   td.note-static{color:#5b4a44}
+  .warn-ic{font-size:13px;margin-right:2px}
+  td.warn-cell{white-space:nowrap}
+  td.warn-cell .warn-ic{vertical-align:middle}
   .notes-add-bar{margin-top:10px}
   .notes-add{border-style:dashed;border-color:#ffc9bb;color:var(--accent);font-weight:600}
   .notes-add:hover{background:var(--accent-soft);border-color:var(--accent)}
@@ -1501,12 +1504,15 @@
         var sv=String(val).trim();
         if(isNotes){
           var hcol=String(head[k2]!=null?head[k2]:"");
+          var isShuo=/说明|說明/.test(hcol);
           if(locked){
             if(/加扣款/.test(hcol)){
               h+='<td>'+(sv?'<span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+esc(sv)+'</span>':'')+'</td>';
             }else if(/备[注註]|范例|範例/.test(hcol)){
               h+='<td class="note-cell"><span class="note-txt">'+esc(val)+'</span>'
                + (sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':'')+'</td>';
+            }else if(isShuo){
+              h+='<td class="note-static">'+(sv?'<span class="warn-ic">⚠️</span> '+esc(val):'')+'</td>';
             }else{
               h+='<td class="note-static">'+(sv?esc(val):'')+'</td>';
             }
@@ -1515,6 +1521,9 @@
           }else if(/备[注註]|范例|範例/.test(hcol)){
             h+='<td class="note-cell"><input class="cell-edit note-inp" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…">'
              + '<button type="button" class="copy-btn copy-input" title="複製">📋</button></td>';
+          }else if(isShuo){
+            h+='<td class="editcell warn-cell">'+(sv?'<span class="warn-ic">⚠️</span>':'')
+             + '<input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
           }else{
             h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
           }
