@@ -26,23 +26,29 @@
     --accent-2:#7ecbc0;
     --accent-soft:#ffe7e1;
     --danger:#ef6b6b;
+    --bg1:#ffe1d6;
+    --bg2:#d8f3ee;
     --shadow:0 2px 4px rgba(214,150,135,.10),0 10px 22px rgba(214,150,135,.14);
     --radius:20px;
     --round:"Noto Sans TC","Noto Sans SC",system-ui,sans-serif;
   }
+  body.theme-mint{--paper:#f1fbf8;--line:#d4efe7;--accent:#3fb89a;--accent-soft:#d6f1ea;--accent-2:#7ecbc0;--ink:#3f5048;--ink-soft:#94b3a8;--bg1:#d8f3ec;--bg2:#e6f1d9;}
+  body.theme-milktea{--paper:#faf4ec;--line:#ecdcc7;--accent:#c2925f;--accent-soft:#f1e6d6;--accent-2:#cbb08c;--ink:#574a3c;--ink-soft:#b8a791;--bg1:#f1e1cf;--bg2:#efe7d6;}
+  body.theme-sky{--paper:#f1f7fd;--line:#d6e6f4;--accent:#5b9bd8;--accent-soft:#dcebf8;--accent-2:#7fb3df;--ink:#3f4a58;--ink-soft:#98a8bd;--bg1:#d6e8fb;--bg2:#def0f5;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{
     font-family:"Noto Sans TC","Noto Sans SC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
     background:
-      radial-gradient(circle at 12% -5%, #ffe1d6 0, transparent 42%),
-      radial-gradient(circle at 92% 4%, #d8f3ee 0, transparent 38%),
+      radial-gradient(circle at 12% -5%, var(--bg1) 0, transparent 42%),
+      radial-gradient(circle at 92% 4%, var(--bg2) 0, transparent 38%),
       var(--paper);
     background-attachment:fixed;
     color:var(--ink);
     line-height:1.55;
     -webkit-font-smoothing:antialiased;
     padding-bottom:env(safe-area-inset-bottom);
+    transition:background .4s;
   }
   .wrap{max-width:none;margin:0 auto;padding:20px 22px 80px}
 
@@ -148,7 +154,11 @@
   }
   .bm:hover{background:var(--accent-soft);transform:translateY(-2px) scale(1.03)}
   .bm:active{transform:scale(.96)}
-  .bm.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+  .bm.sel{background:var(--accent);color:#fff;box-shadow:0 6px 14px rgba(120,90,70,.22)}
+  .bm.sel .lbl{color:#fff}
+  .bm.sel .ic{background:rgba(255,255,255,.85)}
+  .bm.sel::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:var(--accent)}
   .bm .ic{
     width:30px;height:30px;border-radius:11px;flex:0 0 auto;display:grid;place-items:center;
     font-size:17px;line-height:1;background:var(--tag,#ffe0d8);
@@ -172,8 +182,18 @@
     text-align:center;color:var(--ink-soft);padding:44px 20px;border:2px dashed var(--line);
     border-radius:var(--radius);background:rgba(255,255,255,.5)
   }
-  .empty .face{font-size:38px;display:block;margin-bottom:8px}
+  .empty .face{font-size:38px;display:block;margin-bottom:8px;animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
   .empty strong{display:block;color:var(--accent);font-size:16px;margin-bottom:4px;font-family:var(--round)}
+
+  /* skeleton 載入動畫 */
+  .sk-wrap{padding:6px}
+  .sk-row{display:flex;gap:10px;margin-bottom:10px}
+  .sk-cell{flex:1;height:18px;border-radius:7px;
+    background:linear-gradient(90deg,#efe6dd 25%,#f8f1ea 37%,#efe6dd 63%);
+    background-size:400% 100%;animation:shimmer 1.3s ease infinite}
+  .sk-cell.w-s{flex:.5}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
 
   /* inline content panel */
   .panel{margin-top:18px;animation:fadein .22s ease}
@@ -234,8 +254,9 @@
 
   /* linked google sheet */
   .sheet-block{
-    background:var(--card);border:2px solid var(--line);border-radius:18px;
-    padding:12px 13px;margin-bottom:12px;box-shadow:var(--shadow);
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:14px 15px;margin-bottom:12px;
+    box-shadow:0 2px 6px rgba(150,110,90,.06),0 14px 34px rgba(150,110,90,.10);
   }
   .sheet-bar{display:flex;align-items:center;gap:9px;margin-bottom:10px}
   .sheet-title{font-weight:700;font-size:14.5px;font-family:var(--round);color:var(--accent)}
@@ -252,16 +273,51 @@
   .sheet-search input{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 2px}
   .sheet-search .ss-clear{border:none;background:transparent;cursor:pointer;color:var(--ink-soft);font-size:13px;padding:4px 6px;border-radius:8px}
   .sheet-search .ss-clear:hover{background:var(--accent-soft);color:var(--accent)}
-  .sheet-scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
-  table.sheet-tbl{border-collapse:collapse;width:100%;font-size:17px}
+  .sheet-scroll{overflow-x:auto;border-radius:14px;border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+  table.sheet-tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:17px}
   table.sheet-tbl th,table.sheet-tbl td{
-    border:1px solid #d9d2c6;padding:11px 14px;text-align:center;white-space:nowrap;
+    border-right:1px solid #e7ddcf;border-bottom:1px solid #e7ddcf;padding:11px 14px;text-align:center;white-space:nowrap;
   }
-  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;z-index:2;font-family:var(--round);font-size:16px;font-weight:700;box-shadow:0 1px 0 #d9d2c6}
+  table.sheet-tbl thead th{background:var(--accent-soft);color:var(--ink);position:sticky;top:0;z-index:3;font-family:var(--round);font-size:16px;font-weight:700;box-shadow:0 2px 0 #e7ddcf}
   table.sheet-tbl thead th.g-in{background:#d9ead3;color:#274e13}
   table.sheet-tbl thead th.g-out{background:#cfe2e6;color:#0c343d}
+  table.sheet-tbl tbody td:first-child,table.sheet-tbl thead th:first-child{position:sticky;left:0;z-index:2;background:#fffaf6;box-shadow:1px 0 0 #e7ddcf}
+  table.sheet-tbl thead th:first-child{z-index:5;background:var(--accent-soft)}
   table.sheet-tbl tbody tr:nth-child(even){background:#fff8f5}
   td.amt{font-variant-numeric:tabular-nums;font-weight:600}
+  /* 加减 美化 */
+  .sheet-tbl tbody tr:nth-child(even){background:rgba(255,243,238,.45)}
+  .sheet-tbl tbody tr:hover{background:#fff2ec}
+  td.amt-cell{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .amt-num{font-weight:700;font-size:15px;color:#4a3f3a;letter-spacing:.3px}
+  .amt-num.zero{color:#cdbdb4;font-weight:500}
+  td.name-cell{text-align:center;white-space:nowrap}
+  .name-chip{
+    display:inline-block;padding:3px 11px;border-radius:999px;background:#fff;border:1.5px solid var(--line);
+    font-weight:600;font-size:13.5px;color:#6a564f;
+  }
+  tr.subhead{background:#fbeee8 !important}
+  tr.subhead td.subh-cell{
+    text-align:center;font-weight:700;color:#9a6f60;font-size:13px;letter-spacing:1px;
+    padding:8px 10px;border-bottom:2px solid #f0d6cb;position:sticky;
+  }
+  .sheet-totals{
+    display:flex;flex-wrap:wrap;gap:12px;margin:14px 2px 2px;
+  }
+  .tot-item{
+    flex:1;min-width:150px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 16px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);
+    border:1px solid var(--line);
+  }
+  .tot-item span{font-size:13px;color:var(--ink-soft);font-weight:600}
+  .tot-item b{font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+  .tot-item.in{border-left:4px solid #4caf7d}
+  .tot-item.in b{color:#2f8a52}
+  .tot-item.out{border-left:4px solid #5a9bd8}
+  .tot-item.out b{color:#2f6fb0}
+  .tot-item.diff{border-left:4px solid var(--accent);background:#fff6f3}
+  .tot-item.diff b{color:#e0852b}
+  .tot-item.diff.neg b{color:var(--danger)}
   .st-yes{display:inline-block;min-width:1.5em;padding:.08em .45em;border-radius:.55em;background:#dcefe0;color:#1f7a3a;font-weight:700}
   .st-no{display:inline-block;min-width:1.5em;padding:.08em .45em;border-radius:.55em;background:#f6e0db;color:#c0492f;font-weight:700}
   td.dropcell{padding:5px 6px}
@@ -327,8 +383,10 @@
     border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;
     padding:3px 5px;border-radius:8px;opacity:.5;vertical-align:middle;transition:.12s;
   }
-  .copy-btn:hover{opacity:1;background:var(--accent-soft)}
+  .copy-btn:hover{opacity:1;background:var(--accent-soft);transform:scale(1.18)}
   .copy-btn.copied{opacity:1;color:var(--accent);font-weight:700}
+  .name-chip{transition:transform .12s,box-shadow .12s}
+  tr:hover .name-chip{transform:translateY(-1px);box-shadow:0 3px 8px rgba(150,110,90,.14)}
   .sheet-err{color:var(--danger);font-size:13px;padding:6px 2px;line-height:1.5}
   .sheet-empty{color:var(--ink-soft);font-size:13px;padding:8px 2px}
   .sheet-more{font-size:12px;color:var(--ink-soft);padding:6px 2px 0}
@@ -534,6 +592,7 @@
         <p>什麼資料都吃，重點自動吐出來</p>
       </div>
       <div class="spacer"></div>
+      <button class="ghost-btn" id="themeBtn" title="換主題色" style="padding:6px 10px;line-height:0">🎨</button>
       <button class="ghost-btn" id="calcBtn" title="小計算機" style="padding:6px 10px;line-height:0">
         <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" aria-label="計算機">
           <rect x="3" y="1.6" width="18" height="20.8" rx="3" fill="#5b5f64"/>
@@ -1256,7 +1315,7 @@
       showCol[cc]=any;
     }
     // 欄位類型（下拉/可編輯/商戶/✓✕切換 只在「开关」啟用）
-    var copyCol={}, dropCol={}, editCol={}, mcCol={}, toggleCol={}, timeCol={};
+    var copyCol={}, dropCol={}, editCol={}, mcCol={}, toggleCol={}, timeCol={}, amountCol={};
     var hdrRows=[rows[0]||[], rows[1]||[]];
     for(var c=0;c<cols;c++){
       var htrim=String(head[c]!=null?head[c]:"").trim();
@@ -1269,8 +1328,25 @@
       }
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
+        if(/金[额額]/.test(hd)){ amountCol[c]=true; }
         if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
       }
+    }
+    // 加减(非开关)：合計用的金額欄、子表頭判斷
+    var amtCols=[]; for(var ac=0;ac<cols;ac++){ if(amountCol[ac]&&showCol[ac]&&!isSwitch) amtCols.push(ac); }
+    var sums={}; amtCols.forEach(function(c){ sums[c]=0; });
+    function fmtAmount(v){
+      var s=String(v).trim(); if(s==="") return {html:"",zero:false,num:null,raw:""};
+      var n=Number(s.replace(/,/g,""));
+      if(!isFinite(n)) return {html:esc(v),zero:false,num:null,raw:s};
+      var p=s.replace(/,/g,"").split("."), dec=p[1]?p[1].length:0;
+      return {html:n.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec}), zero:(n===0), num:n, raw:String(n)};
+    }
+    function isSubHeader(rowArr){
+      var got=false;
+      for(var i=0;i<cols;i++){ if(!showCol[i]) continue; var t=String(rowArr[i]!=null?rowArr[i]:"").trim();
+        if(t==="") continue; if(/^(三方|金[额額])$/.test(t)) got=true; else return false; }
+      return got;
     }
     var h='<div class="sheet-scroll"><table class="sheet-tbl"><thead><tr>';
     for(var k=0;k<cols;k++){
@@ -1282,12 +1358,21 @@
     h+='</tr></thead><tbody>';
     for(var ri=0;ri<shown.length;ri++){
       var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
-      h+='<tr>';
+      var subH = (!isSwitch && isSubHeader(rowArr));
+      h+='<tr'+(subH?' class="subhead"':'')+'>';
       for(var k2=0;k2<cols;k2++){
         if(!showCol[k2]) continue;
         var val=rowArr[k2]!=null?rowArr[k2]:"";
         var sv=String(val).trim();
-        if(dropCol[k2]){
+        if(subH){
+          h+='<td class="subh-cell">'+esc(val)+'</td>';
+        }else if(amountCol[k2] && !isSwitch){
+          var f=fmtAmount(val);
+          if(f.num!=null && amtCols.indexOf(k2)>-1) sums[k2]+=f.num;
+          if(f.html===""){ h+='<td class="amt-cell"></td>'; }
+          else h+='<td class="amt-cell"><span class="amt-num'+(f.zero?" zero":"")+'">'+f.html+'</span>'
+                + '<button type="button" class="copy-btn" data-copy="'+esc(f.raw)+'" title="複製">📋</button></td>';
+        }else if(dropCol[k2]){
           if(locked){
             var lc=cellColor(sv), ls=lc?(' style="background:'+lc+';color:'+textOn(lc)+'"'):'';
             h+='<td class="dropcell"><span class="cell-static"'+ls+'>'+esc(sv||"—")+'</span></td>';
@@ -1330,8 +1415,13 @@
              + '</td>';
           }
         }else if(copyCol[k2] && sv!==""){
-          h+='<td class="amt"><span>'+esc(val)+'</span>'
-           + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+          if(!isSwitch){
+            h+='<td class="name-cell"><span class="name-chip">'+esc(val)+'</span>'
+             + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+          }else{
+            h+='<td class="amt"><span>'+esc(val)+'</span>'
+             + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+          }
         }else if(/^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(sv)){
           h+='<td><span class="st-yes">✓</span></td>';
         }else if(/^(✗|✘|×|x|╳|否|無|无|關閉|关闭)$/i.test(sv)){
@@ -1478,6 +1568,13 @@
     e.stopPropagation();
     copyText(b.getAttribute("data-copy")||"", b);
   }
+  function skeletonHTML(){
+    var h='<div class="sk-wrap">';
+    for(var r=0;r<6;r++){
+      h+='<div class="sk-row"><div class="sk-cell w-s"></div><div class="sk-cell"></div><div class="sk-cell"></div><div class="sk-cell w-s"></div></div>';
+    }
+    return h+'</div>';
+  }
   function renderSheetBlock(t){
     var box=$("sheetBlock");
     var hasData = t && t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
@@ -1518,7 +1615,7 @@
       }else if(!t.sheetCache && !st.loading){
         h+='<div class="sheet-empty">按「重新整理」讀取試算表內容。</div>';
       }else if(!t.sheetCache && st.loading){
-        h+='<div class="sheet-empty">讀取中…</div>';
+        h+=skeletonHTML();
       }
     }
     box.innerHTML=h;
@@ -1927,6 +2024,24 @@
     setTimeout(function(){ try{ $("gateInput").focus(); }catch(e){} }, 100);
   }
   initGate();
+
+  /* 主題色（粉珊瑚/薄荷/奶茶/天藍）循環切換 */
+  (function(){
+    var THEMES=["","theme-mint","theme-milktea","theme-sky"];
+    var NAMES=["粉珊瑚","薄荷綠","奶茶","天藍"];
+    var i=0; try{ var s=localStorage.getItem("shixiang_theme"); var k=THEMES.indexOf(s||""); if(k>-1) i=k; }catch(e){}
+    function apply(){
+      THEMES.forEach(function(c){ if(c) document.body.classList.remove(c); });
+      if(THEMES[i]) document.body.classList.add(THEMES[i]);
+      try{ localStorage.setItem("shixiang_theme", THEMES[i]); }catch(e){}
+    }
+    apply();
+    var btn=$("themeBtn");
+    if(btn) btn.addEventListener("click", function(){
+      i=(i+1)%THEMES.length; apply();
+      if(typeof toast==="function") toast("主題：" + NAMES[i]);
+    });
+  })();
 
   /* 便條紙「今日头条」 */
   (function(){
