@@ -970,6 +970,8 @@
     if(!nt.sheetCache || !nt.sheetCache.rows || !nt.sheetCache.rows.length){
       nt.sheetCache={ rows:NOTES_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
     }
+    // 預設：每次登入（載入）鎖定所有內容避免誤改；但「加减」保持解鎖以維持自動更新
+    d.topics.forEach(function(t){ t.locked = (t.name!=="加减"); });
     return d;
   }
   function load(){
