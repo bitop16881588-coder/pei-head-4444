@@ -36,6 +36,7 @@
   body.theme-milktea{--paper:#faf4ec;--line:#ecdcc7;--accent:#c2925f;--accent-soft:#f1e6d6;--accent-2:#cbb08c;--ink:#574a3c;--ink-soft:#b8a791;--bg1:#f1e1cf;--bg2:#efe7d6;}
   body.theme-sky{--paper:#f1f7fd;--line:#d6e6f4;--accent:#5b9bd8;--accent-soft:#dcebf8;--accent-2:#7fb3df;--ink:#3f4a58;--ink-soft:#98a8bd;--bg1:#d6e8fb;--bg2:#def0f5;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
   html,body{margin:0;padding:0}
   body{
     font-family:"Noto Sans TC","Noto Sans SC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
@@ -294,6 +295,21 @@
   .amt-num{font-weight:700;font-size:15px;color:#4a3f3a;letter-spacing:.3px}
   .amt-num.zero{color:#cdbdb4;font-weight:500}
   td.name-cell{text-align:center;white-space:nowrap}
+  td.note-cell{text-align:left;white-space:nowrap}
+  .note-txt{font-size:14.5px;color:#5b4a44}
+  .ad-chip{display:inline-block;padding:2px 11px;border-radius:999px;font-weight:700;font-size:13px}
+  .ad-add{background:#dcefe0;color:#2f8a52}
+  .ad-sub{background:#fbe1e1;color:#cf5b5b}
+  td.del-c{padding:4px 6px;background:#fffaf6}
+  th.del-h{background:var(--accent-soft);width:34px}
+  .row-del{border:none;background:transparent;color:#d99;font-size:14px;cursor:pointer;
+    width:24px;height:24px;border-radius:8px;line-height:1}
+  .row-del:hover{background:#fbe1e1;color:#cf5b5b}
+  .note-cell .note-inp{min-width:240px}
+  td.note-static{color:#5b4a44}
+  .notes-add-bar{margin-top:10px}
+  .notes-add{border-style:dashed;border-color:#ffc9bb;color:var(--accent);font-weight:600}
+  .notes-add:hover{background:var(--accent-soft);border-color:var(--accent)}
   .name-chip{
     display:inline-block;padding:3px 11px;border-radius:999px;background:#fff;border:1.5px solid var(--line);
     font-weight:600;font-size:13.5px;color:#6a564f;
@@ -663,7 +679,7 @@
         在下面輸入第一筆，餵給它吃。
       </div>
 
-      <div class="add-item-bar">
+      <div class="add-item-bar" id="addItemBar">
         <button class="attach-btn" id="attachBtn" title="上傳檔案（Excel／PDF／圖片／Word…）" aria-label="上傳檔案">📎</button>
         <input id="newItemInput" type="text" placeholder="打字丟重點，或按 📎 上傳檔案…" maxlength="120">
         <button class="pill-btn" id="addItemBtn" disabled>新增</button>
@@ -877,6 +893,37 @@
   var AUTO_REFRESH_MS = 5*60*1000;  // 連動表自動重新整理間隔（5 分鐘）
   var autoRefreshTimer = null;      // 目前連動主題的自動刷新計時器
 
+  var NOTES_NAME="备注";
+  var NOTES_SEED=[
+    ["状况","加扣款","备注（范例）","说明"],
+    ["回单掉单","加款","pro999 外部-回单支付掉单 106051",""],
+    ["","扣款","pro999 外部-回单支付充值手续费 106051",""],
+    ["jj掉单","加款","pro999 外部-JJ卡转卡掉单106909",""],
+    ["","扣款","pro999 外部-JJ卡转卡充值手续费106909",""],
+    ["出款失败补回","加款","8/27 出款失败补回115585",""],
+    ["","加款","8/27 出款失败补回手续费115585","出款手续费商户0通道1"],
+    ["人工提款","扣款","pro999外部-回单支付 人工提款45085",""],
+    ["","扣款","pro999外部-回单支付 人工提款手续费45085","手续费商户0通道1"],
+    ["误存提出","扣款","pro999外部-回单支付 误存提出 43053",""],
+    ["","加款","pro999外部-回单支付 误存提出手续费 43053",""],
+    ["代理佣金","加款","商户号+人工代理佣金补入+四方单号","10/26 交接 统一备注"],
+    ["","扣款","商户号+人工代理佣金提出+四方单号",""],
+    ["修正帐","","修正+原备注+要修正的四方单号",""],
+    ["JJ未实名手续费通道","扣款","2568921 未实名手续费-1","5元"],
+    ["","扣款","2568921 未实名手续费-2","JJ多扣的"],
+    ["JJ未实名手续费商户","扣款","2325056 未实名手续费-1","固定5元"],
+    ["码上未实名手续费商户","扣款","2325056 未实名手续费","固定5元"],
+    ["WF支付宝出款手续费","扣款","TF0001 WF支付宝出款手续费 1411766",""],
+    ["跟BB借款","加款","向BBP借款",""],
+    ["BB跟我们借款","扣款","借款给BBP",""],
+    ["跟LG借款","加款","向LG借款",""],
+    ["三方没收手续费时","加款","手续费优惠",""],
+    ["出款手续费是0元","加款","TC001 出款手续费补回 1097288",""],
+    ["环宇充U","加款","通道充U（7.53）",""],
+    ["第三方赔付资金","加款","订单日期+第三方赔付资金+四方订单号",""],
+    ["充U→后台加款备注","加款","商户充U（汇率）",""],
+    ["换U→后台扣款备注","扣款","商户换U（汇率）",""]
+  ];
   var state = load();
   var view = "home";          // "home" | "topic"
   var curTopic = null;        // topic id
@@ -893,6 +940,8 @@
   /* ---------- storage ---------- */
   function applyPinned(d){
     function find(name){ for(var i=0;i<d.topics.length;i++){ if(d.topics[i].name===name) return d.topics[i]; } return null; }
+    // 清理沒有名稱的壞書籤（舊版 bug 殘留，例如顯示 undefined 的那個）
+    d.topics = d.topics.filter(function(t){ return t && t.name!=null && t.name!==""; });
     // 清理舊字：推护 → 维护（含已存在瀏覽器的編輯資料）
     d.topics.forEach(function(t){
       if(t.sheetCache && t.sheetCache.rows){
@@ -913,6 +962,13 @@
     sw.name=SWITCH_NAME; sw.sheetUrl=""; sw.sheetTab="";
     if(!sw.sheetCache || sw.sheetCache.seed || !sw.sheetCache.rows || !sw.sheetCache.rows.length){
       sw.sheetCache={ rows:SWITCH_SEED, at:Date.now(), seed:true };
+    }
+    // 备注：永久固定、不連動的對照清單
+    var nt=find(NOTES_NAME);
+    if(!nt){ nt={ id:uid(), name:NOTES_NAME, color:COLORS[2%COLORS.length], icon:"📝", items:[] }; d.topics.push(nt); }
+    nt.name=NOTES_NAME; nt.sheetUrl=""; nt.sheetTab="";
+    if(!nt.sheetCache || !nt.sheetCache.rows || !nt.sheetCache.rows.length){
+      nt.sheetCache={ rows:NOTES_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
     }
     return d;
   }
@@ -1061,6 +1117,15 @@
     $("topicDot").textContent = t.icon;
     $("topicDot").style.background = tint(t.color);
     renderSheetBlock(t);
+
+    // 表格型主題（連動/固定表）隱藏「項目清單＋輸入列」，只用表格本身
+    var isSheetTopic = !!(t.sheetUrl || (t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length));
+    var bar=$("addItemBar"); if(bar) bar.classList.toggle("hidden", isSheetTopic);
+    if(isSheetTopic){
+      $("itemList").innerHTML="";
+      $("itemEmpty").classList.add("hidden");
+      return;
+    }
 
     var list = $("itemList"), html = "";
     t.items.forEach(function(it){
@@ -1355,6 +1420,7 @@
     var cols=0; [head].concat(shown.map(function(o){return o.row;})).forEach(function(r){ if(r.length>cols) cols=r.length; });
     var annoMap = (topicById(curTopic)||{}).anno || {};
     var isSwitch = ((topicById(curTopic)||{}).name === SWITCH_NAME);
+    var isNotes = ((topicById(curTopic)||{}).name === NOTES_NAME);
     var locked = !!(topicById(curTopic)||{}).locked;
     // 隱藏完全空白的欄（表頭與全部資料皆空）
     var showCol=[];
@@ -1378,7 +1444,7 @@
       for(var hr=0;hr<hdrRows.length;hr++){
         var hd=String(hdrRows[hr][c]!=null?hdrRows[hr][c]:"");
         if(/金[额額]/.test(hd)){ amountCol[c]=true; }
-        if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd)){ copyCol[c]=true; break; }
+        if(/金[额額]/.test(hd) || /三方/.test(hd) || /商[户戶]|名[称稱]/.test(hd) || /备[注註]|范例|範例/.test(hd)){ copyCol[c]=true; break; }
       }
     }
     // 加减(非开关)：合計用的金額欄、子表頭判斷
@@ -1422,6 +1488,7 @@
       h+='<th'+thc+'>'+esc(ht)+'</th>';
     }
     h+='</tr></thead><tbody>';
+    if(isNotes && !locked){ h=h.replace('</tr></thead><tbody>', '<th class="del-h"></th></tr></thead><tbody>'); }
     for(var ri=0;ri<shown.length;ri++){
       var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
       var subH = (!isSwitch && isSubHeader(rowArr));
@@ -1430,7 +1497,26 @@
         if(!showCol[k2]) continue;
         var val=rowArr[k2]!=null?rowArr[k2]:"";
         var sv=String(val).trim();
-        if(subH){
+        if(isNotes){
+          var hcol=String(head[k2]!=null?head[k2]:"");
+          if(locked){
+            if(/加扣款/.test(hcol)){
+              h+='<td>'+(sv?'<span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+esc(sv)+'</span>':'')+'</td>';
+            }else if(/备[注註]|范例|範例/.test(hcol)){
+              h+='<td class="note-cell"><span class="note-txt">'+esc(val)+'</span>'
+               + (sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':'')+'</td>';
+            }else{
+              h+='<td class="note-static">'+(sv?esc(val):'')+'</td>';
+            }
+          }else if(/加扣款/.test(hcol)){
+            h+='<td class="dropcell">'+buildAdSelect(val, ridx, k2)+'</td>';
+          }else if(/备[注註]|范例|範例/.test(hcol)){
+            h+='<td class="note-cell"><input class="cell-edit note-inp" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…">'
+             + '<button type="button" class="copy-btn copy-input" title="複製">📋</button></td>';
+          }else{
+            h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
+          }
+        }else if(subH){
           h+='<td class="subh-cell">'+esc(val)+'</td>';
         }else if(amountCol[k2] && !isSwitch){
           var f=fmtAmount(val);
@@ -1482,12 +1568,19 @@
           }
         }else if(copyCol[k2] && sv!==""){
           if(!isSwitch){
-            h+='<td class="name-cell"><span class="name-chip">'+esc(val)+'</span>'
-             + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+            if(/备[注註]|范例|範例/.test(String(head[k2]!=null?head[k2]:""))){
+              h+='<td class="note-cell"><span class="note-txt">'+esc(val)+'</span>'
+               + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+            }else{
+              h+='<td class="name-cell"><span class="name-chip">'+esc(val)+'</span>'
+               + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+            }
           }else{
             h+='<td class="amt"><span>'+esc(val)+'</span>'
              + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
           }
+        }else if(sv==="加款"||sv==="扣款"){
+          h+='<td><span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+sv+'</span></td>';
         }else if(/^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(sv)){
           h+='<td><span class="st-yes">✓</span></td>';
         }else if(/^(✗|✘|×|x|╳|否|無|无|關閉|关闭)$/i.test(sv)){
@@ -1496,6 +1589,7 @@
           h+='<td>'+esc(val)+'</td>';
         }
       }
+      if(isNotes && !locked){ h+='<td class="del-c"><button type="button" class="row-del" data-r="'+ridx+'" title="刪除這筆">✕</button></td>'; }
       h+='</tr>';
     }
     h+='</tbody></table></div>';
@@ -1552,9 +1646,19 @@
     return '<select class="cell-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
   }
   function colorCellSel(sel){
-    var col=cellColor(sel.value);
-    if(col){ sel.style.background=col; sel.style.color=textOn(col); sel.style.borderColor=col; }
+    var col = sel.classList.contains("ad-sel") ? (AD_COLORS[sel.value]||"") : cellColor(sel.value);
+    if(col){ sel.style.background=col; sel.style.color=(sel.classList.contains("ad-sel")?(sel.value==="加款"?"#2f8a52":"#cf5b5b"):textOn(col)); sel.style.borderColor=col; }
     else { sel.style.background=""; sel.style.color=""; sel.style.borderColor=""; }
+  }
+  var AD_COLORS={ "加款":"#dcefe0", "扣款":"#fbe1e1" };
+  function buildAdSelect(val, r, c){
+    var cur=String(val==null?"":val).trim();
+    var opts=["","加款","扣款"], out="";
+    if(cur!=="" && opts.indexOf(cur)<0) opts.push(cur);
+    opts.forEach(function(o){ out+='<option value="'+esc(o)+'"'+(o===cur?" selected":"")+'>'+(o===""?"—":esc(o))+'</option>'; });
+    var bg=AD_COLORS[cur]||"", style="";
+    if(bg) style=' style="background:'+bg+';color:'+(cur==="加款"?"#2f8a52":"#cf5b5b")+';border-color:'+bg+';font-weight:700"';
+    return '<select class="cell-sel ad-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
   }
   function onCellChange(e){
     var el=e.target;
@@ -1584,7 +1688,23 @@
       return;
     }
     var cp=e.target.closest ? e.target.closest(".copy-btn") : null;
-    if(cp){ e.stopPropagation(); copyText(cp.getAttribute("data-copy")||"", cp); return; }
+    if(cp){
+      e.stopPropagation();
+      var ctxt;
+      if(cp.classList.contains("copy-input")){
+        var inp=cp.parentNode.querySelector("input.cell-edit");
+        ctxt = inp ? inp.value : "";
+      }else{ ctxt = cp.getAttribute("data-copy")||""; }
+      copyText(ctxt, cp); return;
+    }
+    var rd=e.target.closest ? e.target.closest(".row-del") : null;
+    if(rd){
+      e.stopPropagation();
+      var td=topicById(curTopic); if(!td || !td.sheetCache || !td.sheetCache.rows) return;
+      var rr=parseInt(rd.getAttribute("data-r"),10);
+      if(rr>0 && rr<td.sheetCache.rows.length){ td.sheetCache.rows.splice(rr,1); td.sheetCache.seed=false; save(); renderHome(); }
+      return;
+    }
     var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
     if(ab){
       e.stopPropagation();
@@ -1664,7 +1784,7 @@
       h='<div class="sheet-bar"><span class="sheet-title">📌 固定資料</span>'
        + '<span class="sheet-meta">不連動'+(t.locked?' · 🔒 已鎖定':'')+'</span>'
        + '<button class="mini-btn'+(t.locked?' locked-on':'')+'" id="sheetLock">'+(t.locked?'🔒 已鎖定':'🔓 鎖定')+'</button>'
-       + (t.locked?'':'<button class="mini-btn" id="sheetRelink" title="重新接回試算表連動">↻ 重新連動</button>')
+       + ((t.locked||!t.frozenUrl)?'':'<button class="mini-btn" id="sheetRelink" title="重新接回試算表連動">↻ 重新連動</button>')
        + '</div>';
     }
     if(hasData){
@@ -1673,6 +1793,9 @@
        + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
        + '</div>';
       h+='<div id="sheetTableWrap">'+renderTable(t.sheetCache.rows, fval)+'</div>';
+      if(t.name===NOTES_NAME && !t.locked){
+        h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="notesAddRow">＋ 新增一筆</button></div>';
+      }
     }
     if(linked){
       if(st.error==="__NEEDLOGIN__"){
@@ -1687,6 +1810,17 @@
       }
     }
     box.innerHTML=h;
+    var nar=$("notesAddRow");
+    if(nar) nar.addEventListener("click", function(){
+      if(!t.sheetCache || !t.sheetCache.rows) return;
+      var ncol=(t.sheetCache.rows[0]||["","","",""]).length || 4;
+      var nr=[]; for(var i=0;i<ncol;i++) nr.push("");
+      t.sheetCache.rows.push(nr); t.sheetCache.seed=false; save();
+      sheetFilters[t.id]="";   // 清篩選確保新列看得到
+      renderSheetBlock(t);
+      var inps=document.querySelectorAll('#sheetTableWrap tbody tr:last-child input.cell-edit');
+      if(inps && inps.length) inps[0].focus();
+    });
     var rb=$("sheetRefresh");
     if(rb) rb.addEventListener("click", function(){ syncSheet(t.id); });
     var lb=$("sheetLogin");
