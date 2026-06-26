@@ -307,10 +307,22 @@
   .row-del:hover{background:#fbe1e1;color:#cf5b5b}
   .note-cell .note-inp{min-width:240px}
   td.note-static{color:#5b4a44}
+  td.mc-anno{position:relative;padding-right:22px}
+  td.mc-anno .cell-edit{padding-right:20px}
+  table.sheet-tbl td[rowspan]{vertical-align:middle;background:#fffdfb;font-weight:600}
+  table.sheet-tbl td[rowspan].note-cell{background:#fffdfb}
   .warn-ic{font-size:13px;margin-right:2px}
   td.warn-cell{white-space:nowrap}
   td.warn-cell .warn-ic{vertical-align:middle}
   .notes-add-bar{margin-top:10px}
+  .qa-tabs{display:flex;gap:8px;margin:0 2px 10px}
+  .qa-tab{border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);
+    font:inherit;font-weight:700;font-size:14px;padding:7px 16px;border-radius:999px;cursor:pointer;transition:.14s}
+  .qa-tab:hover{transform:translateY(-1px)}
+  .qa-tab.sel{color:#fff;border-color:transparent}
+  .qa-tab.sel{background:var(--accent)}
+  .qa-tab.out.sel{background:#5a9bd8}
+  .qa-tab.inc.sel{background:#3fb87d}
   .notes-add{border-style:dashed;border-color:#ffc9bb;color:var(--accent);font-weight:600}
   .notes-add:hover{background:var(--accent-soft);border-color:var(--accent)}
   .name-chip{
@@ -927,6 +939,21 @@
     ["充U→后台加款备注","加款","商户充U（汇率）",""],
     ["换U→后台扣款备注","扣款","商户换U（汇率）",""]
   ];
+  var IMPORTANT_NAME="重要";
+  var IMPORTANT_SEED=[
+    ["商户","金额","处理方式","说明"],
+    ["wxc888 (2026/6/20)","5000元以下","逾时时间 +2H，出款没来要就补","错误支付维持原先作法 2小时到要主动跟BBP说是商户 wxc888 的单，他们才会比照方式处理"],
+    ["wxc888","5000元以上（含5000）","先维持原先作法",""],
+    ["DR888","3000以下","逾时时间 +2H，出款没来要就补","错误支付维持原先作法 2小时到要主动跟BBP说是商户 DR888 的单，他们才会比照方式处理"],
+    ["DR888","3000以上（含3000）","先维持原先作法",""]
+  ];
+  var QA_NAME="Q&A";
+  var QA_COLORS={ "出货":"#dceaf8", "进货":"#dcefe0" };
+  var QA_SEED=[
+    ["问题","答案","类型"],
+    ["（范例）出货怎么操作？","（范例）……","出货"],
+    ["（范例）进货怎么登记？","（范例）……","进货"]
+  ];
   var state = load();
   var view = "home";          // "home" | "topic"
   var curTopic = null;        // topic id
@@ -972,6 +999,27 @@
     nt.name=NOTES_NAME; nt.sheetUrl=""; nt.sheetTab="";
     if(!nt.sheetCache || !nt.sheetCache.rows || !nt.sheetCache.rows.length){
       nt.sheetCache={ rows:NOTES_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
+    }
+    // 重要：永久固定、可編輯/鎖定/新增的提醒清單
+    var im=find(IMPORTANT_NAME);
+    if(!im){ im={ id:uid(), name:IMPORTANT_NAME, color:COLORS[6%COLORS.length], icon:"⭐", items:[] }; d.topics.push(im); }
+    im.name=IMPORTANT_NAME; im.sheetUrl=""; im.sheetTab="";
+    if(!im.sheetCache || !im.sheetCache.rows || !im.sheetCache.rows.length){
+      im.sheetCache={ rows:IMPORTANT_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
+    }
+    if(im.sheetCache && im.sheetCache.rows){
+      var _h=im.sheetCache.rows[0]||[], _ci=_h.indexOf("商户");
+      im.sheetCache.rows.forEach(function(r,_i){ if(_i===0) return;
+        var _who=_ci>-1?String(r[_ci]||""):"";
+        if(/DR888/.test(_who)){ for(var _c=0;_c<r.length;_c++){ if(typeof r[_c]==="string" && /wxc888/.test(r[_c])) r[_c]=r[_c].replace(/wxc888/g,"DR888"); } }
+      });
+    }
+    // Q&A：出货/进货 可篩選的問答清單
+    var qa=find(QA_NAME);
+    if(!qa){ qa={ id:uid(), name:QA_NAME, color:COLORS[4%COLORS.length], icon:"❓", items:[] }; d.topics.push(qa); }
+    qa.name=QA_NAME; qa.sheetUrl=""; qa.sheetTab="";
+    if(!qa.sheetCache || !qa.sheetCache.rows || !qa.sheetCache.rows.length){
+      qa.sheetCache={ rows:QA_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
     }
     // 預設：每次登入（載入）鎖定所有內容避免誤改；但「加减」保持解鎖以維持自動更新
     d.topics.forEach(function(t){ t.locked = (t.name!=="加减"); });
@@ -1425,7 +1473,8 @@
     var cols=0; [head].concat(shown.map(function(o){return o.row;})).forEach(function(r){ if(r.length>cols) cols=r.length; });
     var annoMap = (topicById(curTopic)||{}).anno || {};
     var isSwitch = ((topicById(curTopic)||{}).name === SWITCH_NAME);
-    var isNotes = ((topicById(curTopic)||{}).name === NOTES_NAME);
+    var __cn=(topicById(curTopic)||{}).name;
+    var isNotes = (__cn === NOTES_NAME || __cn === IMPORTANT_NAME || __cn === QA_NAME);
     var locked = !!(topicById(curTopic)||{}).locked;
     // 隱藏完全空白的欄（表頭與全部資料皆空）
     var showCol=[];
@@ -1494,28 +1543,64 @@
     }
     h+='</tr></thead><tbody>';
     if(isNotes && !locked){ h=h.replace('</tr></thead><tbody>', '<th class="del-h"></th></tr></thead><tbody>'); }
+    // 鎖定唯讀時：同欄上下相同內容自動合併（rowspan）
+    var firstVisCol=-1; for(var fc=0;fc<cols;fc++){ if(showCol[fc]){ firstVisCol=fc; break; } }
+    var mergeMap=null;
+    if(isNotes && locked){
+      mergeMap={};
+      for(var mc2=0;mc2<cols;mc2++){
+        if(!showCol[mc2]) continue;
+        var i2=0;
+        while(i2<shown.length){
+          var v2=String(shown[i2].row[mc2]!=null?shown[i2].row[mc2]:"").trim();
+          if(v2===""){ mergeMap[i2+"_"+mc2]={span:1}; i2++; continue; }
+          var j2=i2+1;
+          while(j2<shown.length && String(shown[j2].row[mc2]!=null?shown[j2].row[mc2]:"").trim()===v2) j2++;
+          mergeMap[i2+"_"+mc2]={span:(j2-i2)};
+          for(var t2=i2+1;t2<j2;t2++) mergeMap[t2+"_"+mc2]={skip:true};
+          i2=j2;
+        }
+      }
+    }
     for(var ri=0;ri<shown.length;ri++){
       var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
       var subH = (!isSwitch && isSubHeader(rowArr));
       h+='<tr'+(subH?' class="subhead"':'')+'>';
       for(var k2=0;k2<cols;k2++){
         if(!showCol[k2]) continue;
+        var __m = mergeMap ? mergeMap[ri+"_"+k2] : null;
+        if(__m && __m.skip) continue;
+        var __rs = (__m && __m.span>1) ? (' rowspan="'+__m.span+'"') : '';
         var val=rowArr[k2]!=null?rowArr[k2]:"";
         var sv=String(val).trim();
         if(isNotes){
           var hcol=String(head[k2]!=null?head[k2]:"");
           var isShuo=/说明|說明/.test(hcol);
+          var isFirstCol=(k2===firstVisCol);
+          var isType=/类型|類型/.test(hcol);
+          var an=(isFirstCol && !isType) ? (annoMap[ridx]||"") : "";
           if(locked){
-            if(/加扣款/.test(hcol)){
-              h+='<td>'+(sv?'<span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+esc(sv)+'</span>':'')+'</td>';
+            if(isType){
+              h+='<td'+__rs+'>'+(sv?'<span class="ad-chip" style="background:'+(sv==="出货"?"#dceaf8":"#dcefe0")+';color:'+(sv==="出货"?"#2f6fb0":"#2f8a52")+'">'+(sv==="出货"?"📤 ":"📥 ")+esc(sv)+'</span>':'')+'</td>';
+            }else if(/加扣款/.test(hcol)){
+              h+='<td'+__rs+'>'+(sv?'<span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+esc(sv)+'</span>':'')+'</td>';
             }else if(/备[注註]|范例|範例/.test(hcol)){
-              h+='<td class="note-cell"><span class="note-txt">'+esc(val)+'</span>'
+              h+='<td class="note-cell"'+__rs+'><span class="note-txt">'+esc(val)+'</span>'
                + (sv!==""?'<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button>':'')+'</td>';
             }else if(isShuo){
-              h+='<td class="note-static">'+(sv?'<span class="warn-ic">⚠️</span> '+esc(val):'')+'</td>';
+              h+='<td class="note-static"'+__rs+'>'+(sv?'<span class="warn-ic">⚠️</span> '+esc(val):'')+'</td>';
+            }else if(isFirstCol){
+              var editingL=(annoEditing===String(ridx));
+              h+='<td class="note-static mc-anno'+(editingL?' editing':'')+'"'+__rs+'>'
+               + '<button type="button" class="anno-btn'+(an?' has':'')+'" data-r="'+ridx+'"'+(an?'':' title="加註解"')+'>'+(an?'':'📝')+'</button>'
+               + (sv?esc(val):'')
+               + (editingL?'<textarea class="anno-edit" data-r="'+ridx+'" rows="2" placeholder="輸入註解（可換行），點別處儲存">'+esc(an)+'</textarea>':'')
+               + '</td>';
             }else{
-              h+='<td class="note-static">'+(sv?esc(val):'')+'</td>';
+              h+='<td class="note-static"'+__rs+'>'+(sv?esc(val):'')+'</td>';
             }
+          }else if(isType){
+            h+='<td class="dropcell">'+buildQaSelect(val, ridx, k2)+'</td>';
           }else if(/加扣款/.test(hcol)){
             h+='<td class="dropcell">'+buildAdSelect(val, ridx, k2)+'</td>';
           }else if(/备[注註]|范例|範例/.test(hcol)){
@@ -1524,6 +1609,13 @@
           }else if(isShuo){
             h+='<td class="editcell warn-cell">'+(sv?'<span class="warn-ic">⚠️</span>':'')
              + '<input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
+          }else if(isFirstCol){
+            var editingN=(annoEditing===String(ridx));
+            h+='<td class="editcell mc-anno'+(editingN?' editing':'')+'">'
+             + '<button type="button" class="anno-btn'+(an?' has':'')+'" data-r="'+ridx+'"'+(an?'':' title="加註解"')+'>'+(an?'':'📝')+'</button>'
+             + '<input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…">'
+             + (editingN?'<textarea class="anno-edit" data-r="'+ridx+'" rows="2" placeholder="輸入註解（可換行），點別處儲存">'+esc(an)+'</textarea>':'')
+             + '</td>';
           }else{
             h+='<td class="editcell"><input class="cell-edit" type="text" data-r="'+ridx+'" data-c="'+k2+'" value="'+esc(val)+'" placeholder="填寫…"></td>';
           }
@@ -1657,11 +1749,20 @@
     return '<select class="cell-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
   }
   function colorCellSel(sel){
-    var col = sel.classList.contains("ad-sel") ? (AD_COLORS[sel.value]||"") : cellColor(sel.value);
-    if(col){ sel.style.background=col; sel.style.color=(sel.classList.contains("ad-sel")?(sel.value==="加款"?"#2f8a52":"#cf5b5b"):textOn(col)); sel.style.borderColor=col; }
+    var col = sel.classList.contains("ad-sel") ? (AD_COLORS[sel.value]||"") : (sel.classList.contains("qa-sel") ? (QA_COLORS[sel.value]||"") : cellColor(sel.value));
+    if(col){ sel.style.background=col; sel.style.color=(sel.classList.contains("ad-sel")?(sel.value==="加款"?"#2f8a52":"#cf5b5b"):(sel.classList.contains("qa-sel")?(sel.value==="出货"?"#2f6fb0":"#2f8a52"):textOn(col))); sel.style.borderColor=col; }
     else { sel.style.background=""; sel.style.color=""; sel.style.borderColor=""; }
   }
   var AD_COLORS={ "加款":"#dcefe0", "扣款":"#fbe1e1" };
+  function buildQaSelect(val, r, c){
+    var cur=String(val==null?"":val).trim();
+    var opts=["","出货","进货"], out="";
+    if(cur!=="" && opts.indexOf(cur)<0) opts.push(cur);
+    opts.forEach(function(o){ out+='<option value="'+esc(o)+'"'+(o===cur?" selected":"")+'>'+(o===""?"—":esc(o))+'</option>'; });
+    var bg=QA_COLORS[cur]||"", style="";
+    if(bg) style=' style="background:'+bg+';color:'+(cur==="出货"?"#2f6fb0":"#2f8a52")+';border-color:'+bg+';font-weight:700"';
+    return '<select class="cell-sel qa-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
+  }
   function buildAdSelect(val, r, c){
     var cur=String(val==null?"":val).trim();
     var opts=["","加款","扣款"], out="";
@@ -1799,12 +1900,20 @@
        + '</div>';
     }
     if(hasData){
+      if(t.name===QA_NAME){
+        var qf=fval;
+        h+='<div class="qa-tabs">'
+         + '<button type="button" class="qa-tab'+(qf===""?" sel":"")+'" data-qa="">全部</button>'
+         + '<button type="button" class="qa-tab out'+(qf==="出货"?" sel":"")+'" data-qa="出货">📤 出货</button>'
+         + '<button type="button" class="qa-tab inc'+(qf==="进货"?" sel":"")+'" data-qa="进货">📥 进货</button>'
+         + '</div>';
+      }
       h+='<div class="sheet-search"><span class="ss-ic">🔍</span>'
        + '<input id="sheetFilter" type="text" placeholder="關鍵字篩選…" value="'+esc(fval)+'">'
        + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
        + '</div>';
       h+='<div id="sheetTableWrap">'+renderTable(t.sheetCache.rows, fval)+'</div>';
-      if(t.name===NOTES_NAME && !t.locked){
+      if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME) && !t.locked){
         h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="notesAddRow">＋ 新增一筆</button></div>';
       }
     }
@@ -1824,13 +1933,22 @@
     var nar=$("notesAddRow");
     if(nar) nar.addEventListener("click", function(){
       if(!t.sheetCache || !t.sheetCache.rows) return;
-      var ncol=(t.sheetCache.rows[0]||["","","",""]).length || 4;
+      var hdr=t.sheetCache.rows[0]||["","","",""];
+      var ncol=hdr.length || 4;
       var nr=[]; for(var i=0;i<ncol;i++) nr.push("");
+      if(t.name===QA_NAME){
+        var tc=-1; for(var ci=0;ci<hdr.length;ci++){ if(/类型|類型/.test(String(hdr[ci]||""))) tc=ci; }
+        var cur=sheetFilters[t.id]||"";
+        if(tc>-1) nr[tc]=(cur==="出货"||cur==="进货")?cur:"出货";
+      }
       t.sheetCache.rows.push(nr); t.sheetCache.seed=false; save();
-      sheetFilters[t.id]="";   // 清篩選確保新列看得到
+      if(t.name!==QA_NAME) sheetFilters[t.id]="";   // 清篩選確保新列看得到（Q&A 保留所選類型）
       renderSheetBlock(t);
       var inps=document.querySelectorAll('#sheetTableWrap tbody tr:last-child input.cell-edit');
       if(inps && inps.length) inps[0].focus();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".qa-tab"), function(b){
+      b.addEventListener("click", function(){ sheetFilters[t.id]=b.getAttribute("data-qa")||""; renderSheetBlock(t); });
     });
     var rb=$("sheetRefresh");
     if(rb) rb.addEventListener("click", function(){ syncSheet(t.id); });
