@@ -316,6 +316,9 @@
   td.warn-cell .warn-ic{vertical-align:middle}
   .notes-add-bar{margin-top:10px}
   .qa-tabs{display:flex;gap:8px;margin:0 2px 10px}
+  td.qa-type{width:1%;white-space:nowrap;padding-left:8px;padding-right:8px;text-align:center}
+  td.qa-type .cell-sel{min-width:0;width:auto;padding:5px 10px}
+  td.qa-type .ad-chip{padding:2px 9px}
   .qa-tab{border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);
     font:inherit;font-weight:700;font-size:14px;padding:7px 16px;border-radius:999px;cursor:pointer;transition:.14s}
   .qa-tab:hover{transform:translateY(-1px)}
@@ -323,6 +326,7 @@
   .qa-tab.sel{background:var(--accent)}
   .qa-tab.out.sel{background:#5a9bd8}
   .qa-tab.inc.sel{background:#3fb87d}
+  .qa-tab.spc.sel{background:#8a7fb0}
   .notes-add{border-style:dashed;border-color:#ffc9bb;color:var(--accent);font-weight:600}
   .notes-add:hover{background:var(--accent-soft);border-color:var(--accent)}
   .name-chip{
@@ -948,7 +952,9 @@
     ["DR888","3000以上（含3000）","先维持原先作法",""]
   ];
   var QA_NAME="Q&A";
-  var QA_COLORS={ "出货":"#dceaf8", "进货":"#dcefe0" };
+  var QA_COLORS={ "出货":"#dceaf8", "进货":"#dcefe0", "特殊":"#ece6f7" };
+  var QA_TEXT={ "出货":"#2f6fb0", "进货":"#2f8a52", "特殊":"#6f5ca0" };
+  var QA_ICON={ "出货":"📤", "进货":"📥", "特殊":"✴️" };
   var QA_SEED=[
     ["问题","答案","类型"],
     ["（范例）出货怎么操作？","（范例）……","出货"],
@@ -1581,7 +1587,7 @@
           var an=(isFirstCol && !isType) ? (annoMap[ridx]||"") : "";
           if(locked){
             if(isType){
-              h+='<td'+__rs+'>'+(sv?'<span class="ad-chip" style="background:'+(sv==="出货"?"#dceaf8":"#dcefe0")+';color:'+(sv==="出货"?"#2f6fb0":"#2f8a52")+'">'+(sv==="出货"?"📤 ":"📥 ")+esc(sv)+'</span>':'')+'</td>';
+              h+='<td class="qa-type"'+__rs+'>'+(sv?'<span class="ad-chip" style="background:'+(QA_COLORS[sv]||"#eee")+';color:'+(QA_TEXT[sv]||"#666")+'">'+(QA_ICON[sv]?QA_ICON[sv]+" ":"")+esc(sv)+'</span>':'')+'</td>';
             }else if(/加扣款/.test(hcol)){
               h+='<td'+__rs+'>'+(sv?'<span class="ad-chip '+(sv==="加款"?"ad-add":"ad-sub")+'">'+esc(sv)+'</span>':'')+'</td>';
             }else if(/备[注註]|范例|範例/.test(hcol)){
@@ -1600,7 +1606,7 @@
               h+='<td class="note-static"'+__rs+'>'+(sv?esc(val):'')+'</td>';
             }
           }else if(isType){
-            h+='<td class="dropcell">'+buildQaSelect(val, ridx, k2)+'</td>';
+            h+='<td class="dropcell qa-type">'+buildQaSelect(val, ridx, k2)+'</td>';
           }else if(/加扣款/.test(hcol)){
             h+='<td class="dropcell">'+buildAdSelect(val, ridx, k2)+'</td>';
           }else if(/备[注註]|范例|範例/.test(hcol)){
@@ -1750,17 +1756,17 @@
   }
   function colorCellSel(sel){
     var col = sel.classList.contains("ad-sel") ? (AD_COLORS[sel.value]||"") : (sel.classList.contains("qa-sel") ? (QA_COLORS[sel.value]||"") : cellColor(sel.value));
-    if(col){ sel.style.background=col; sel.style.color=(sel.classList.contains("ad-sel")?(sel.value==="加款"?"#2f8a52":"#cf5b5b"):(sel.classList.contains("qa-sel")?(sel.value==="出货"?"#2f6fb0":"#2f8a52"):textOn(col))); sel.style.borderColor=col; }
+    if(col){ sel.style.background=col; sel.style.color=(sel.classList.contains("ad-sel")?(sel.value==="加款"?"#2f8a52":"#cf5b5b"):(sel.classList.contains("qa-sel")?(QA_TEXT[sel.value]||"#666"):textOn(col))); sel.style.borderColor=col; }
     else { sel.style.background=""; sel.style.color=""; sel.style.borderColor=""; }
   }
   var AD_COLORS={ "加款":"#dcefe0", "扣款":"#fbe1e1" };
   function buildQaSelect(val, r, c){
     var cur=String(val==null?"":val).trim();
-    var opts=["","出货","进货"], out="";
+    var opts=["","出货","进货","特殊"], out="";
     if(cur!=="" && opts.indexOf(cur)<0) opts.push(cur);
     opts.forEach(function(o){ out+='<option value="'+esc(o)+'"'+(o===cur?" selected":"")+'>'+(o===""?"—":esc(o))+'</option>'; });
     var bg=QA_COLORS[cur]||"", style="";
-    if(bg) style=' style="background:'+bg+';color:'+(cur==="出货"?"#2f6fb0":"#2f8a52")+';border-color:'+bg+';font-weight:700"';
+    if(bg) style=' style="background:'+bg+';color:'+(QA_TEXT[cur]||"#666")+';border-color:'+bg+';font-weight:700"';
     return '<select class="cell-sel qa-sel" data-r="'+r+'" data-c="'+c+'"'+style+'>'+out+'</select>';
   }
   function buildAdSelect(val, r, c){
@@ -1906,6 +1912,7 @@
          + '<button type="button" class="qa-tab'+(qf===""?" sel":"")+'" data-qa="">全部</button>'
          + '<button type="button" class="qa-tab out'+(qf==="出货"?" sel":"")+'" data-qa="出货">📤 出货</button>'
          + '<button type="button" class="qa-tab inc'+(qf==="进货"?" sel":"")+'" data-qa="进货">📥 进货</button>'
+         + '<button type="button" class="qa-tab spc'+(qf==="特殊"?" sel":"")+'" data-qa="特殊">✴️ 特殊</button>'
          + '</div>';
       }
       h+='<div class="sheet-search"><span class="ss-ic">🔍</span>'
@@ -1939,7 +1946,7 @@
       if(t.name===QA_NAME){
         var tc=-1; for(var ci=0;ci<hdr.length;ci++){ if(/类型|類型/.test(String(hdr[ci]||""))) tc=ci; }
         var cur=sheetFilters[t.id]||"";
-        if(tc>-1) nr[tc]=(cur==="出货"||cur==="进货")?cur:"出货";
+        if(tc>-1) nr[tc]=(cur==="出货"||cur==="进货"||cur==="特殊")?cur:"出货";
       }
       t.sheetCache.rows.push(nr); t.sheetCache.seed=false; save();
       if(t.name!==QA_NAME) sheetFilters[t.id]="";   // 清篩選確保新列看得到（Q&A 保留所選類型）
