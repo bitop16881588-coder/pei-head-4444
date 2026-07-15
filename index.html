@@ -327,6 +327,12 @@
   .qa-tab.out.sel{background:#5a9bd8}
   .qa-tab.inc.sel{background:#3fb87d}
   .qa-tab.spc.sel{background:#8a7fb0}
+  .qa-tab.sec-tab.sel{background:#c2925f}
+  /* 规章：寬表可讀性 */
+  td.editcell .cell-edit{min-width:90px}
+  td.mc-anno .cell-edit{min-width:120px}
+  table.sheet-tbl td.note-static{max-width:280px;white-space:normal;word-break:break-word;text-align:left}
+  table.sheet-tbl thead th{max-width:180px;white-space:normal}
   .notes-add{border-style:dashed;border-color:#ffc9bb;color:var(--accent);font-weight:600}
   .notes-add:hover{background:var(--accent-soft);border-color:var(--accent)}
   .name-chip{
@@ -960,6 +966,68 @@
     ["（范例）出货怎么操作？","（范例）……","出货"],
     ["（范例）进货怎么登记？","（范例）……","进货"]
   ];
+  var GUIZHANG_NAME="规章";
+  var GUIZHANG_SEED=[
+    { name:"商户对接", rows:[
+      ["代理", "飞机名称", "對接狀況", "對接记录", "创群时间/ / 群内成员", "商户名", "群组ID", "多选一", "百元倍数", "9/7 换U费率", "充U费率", "回U特殊规则", "入款费率", "出款费率", "支付宝出款费率", "代收金额范围", "代付金额范围", "下发金额范围", "未实名充值手续费", "查询小白单费用", "BBP商户号（单选）", "BBP商户号（多选）", "username / 用户帐号", "是否有支援实际金额参数", "NEW三选一模式", "商户验盘", "押金", "放置限额"],
+      ["TOP", "TF / （隶属于内部）", "已开跑", "2023/6/20已开跑", "", "tf5678", "-5013755079", "✔️", "❌", "OKEX+0.16", "OKEX+0.09", "", "0.02", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "87", "42", "✔️", "✔️", "-", "1", "", "3A"],
+      ["", "TF / （隶属于内部）", "已开跑", "2024/3/25 要开商户号 / 2024/3/26 已开跑", "", "tf1234", "-5013755079", "✔️", "❌", "OKEX+0.2", "OKEX+0.09", "", "0.02", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "87", "42", "✔️", "✔️", "-", "1", "", "3A"],
+      ["", "TF / （隶属于内部）", "已开跑", "", "", "tf8888", "-5013755079", "✔️", "❌", "OKEX+0.2", "OKEX+0.09", "", "0.02", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "87", "42", "✔️", "✔️", "-", "1", "", "3A"],
+      ["", "西瓜", "已开跑", "2023/8/29已开跑 / 2/6 88 WM02 商户闲置", "", "88WM02.XH001", "-2456306033", "✔️", "❌", "OKEX+0.16", "", "", "0.023", "0元", "0元", "110-30000", "110-50000", "110-50000", "5元", "", "0085 / 0086", "0047 / 0052", "✔️", "✔️", "-", "1✅", "", "单间3A"],
+      ["", "西瓜", "已开跑", "2023/8/29已开跑 / 2/6 88 WM02 商户闲置", "", "88XC02.88TC02. 88FL02. / 88TF02.88TS02.88SY02.88WX02.", "-2456306033", "✔️", "❌", "OKEX+0.16", "", "", "0.023", "0元", "0元", "110-30000", "110-50000", "110-50000", "5元", "", "0085 / 0086", "0047 / 0052", "✔️", "✔️", "-", "1✅", "", "单间3A"],
+      ["", "99支付-11哥【shifang1 / Small1】", "已开跑", "2023/5/29已开跑", "", "shifang1", "-4102343393", "✔️", "❌", "OKEX+0.16", "OKEX+0.09", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "85", "47", "✔️", "✔️", "-", "1✅", "", "加总10A"],
+      ["", "", "已开跑", "2023/11/6已开跑 / 2024/7/24馀额转移至shifang1 / Small1就不使用了", "", "Small1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "86", "52", "✔️", "✔️", "-", "", "", ""],
+      ["", "马总", "已开跑", "2023/10/19已开跑", "", "GA0055", "-4004149827", "✔️ / 上下50％", "❌", "OKEX+0.2", "OKEX+0.09", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "33", "X", "✔️", "✔️", "-", "1✅", "23/10/18 / 30000", "3A"],
+      ["", "99支付-water11 / 新西瓜", "已开跑", "1/23 已开跑", "23/12/28 / 曹操 / 冯迪索 / 脚哥", "WX001, TS001,", "-2456306033", "✔️", "❌", "OKEX+0.16", "", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "", "", "尚未开跑", "✔️", "-", "1999/12/31", "", ""],
+      ["", "99支付-water11 / 新西瓜", "已开跑", "1/23 已开跑", "23/12/28 / 曹操 / 冯迪索 / 脚哥", "FL001.XC001.TF001.TC001.SY001,CJ001,CY001,YD001", "-2456306033", "✔️", "❌", "OKEX+0.16", "", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "", "", "尚未开跑", "✔️", "-", "1", "", ""],
+      ["", "99支付-【yoobo518】【du8988】", "已开跑", "", "2024/05/03", "测试yoobo518 / 正式站 yobo5188", "-4279612083", "✔️", "", "OKEX+0.18", "", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "", "", "", "", "", "", "", ""],
+      ["", "99支付-【yoobo518】【du8988】", "已开跑", "", "2024/05/03", "测试du8988 / 正式站 dudu8988", "-4279612083", "", "", "OKEX+0.2", "", "", "", "0元", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+    ] },
+    { name:"特殊审单", rows:[
+      ["代理", "飞机名称", "對接狀況", "對接记录", "创群时间/ / 群内成员", "商户名", "群组ID", "多选一", "百元倍数", "9/7 换U费率", "充U费率", "回U特殊规则", "入款费率", "出款费率", "代收金额范围", "代付金额范围", "下发金额范围", "未实名充值手续费", "查询小白单费用", "BBP商户号（单选）", "BBP商户号（多选）", "username / 用户帐号", "是否有支援实际金额参数", "NEW三选一模式", "商户验盘", "押金", "放置限额", "", ""],
+      ["", "西瓜", "已开跑", "7/2开户", "", "SY0001.FL0001.WX0001 / TS0001.XC0001.XH0001 / TF0001.TC0001,CJ0001,CY0001,YD0001", "-2456306033", "0", "❌", "OKEX+0.16", "", "", "0.024", "0元", "501-30000", "110-30000", "110-50000", "5元", "", "", "127", "✔️", "✔️", "", "", "", "", "", "无需"],
+      ["", "99支付-11哥【shifang1 / sfpay1】", "已开跑", "7/3开户", "", "测试站 sfpay1 / 正式站 sfpay1", "-4102343393", "✔️", "❌", "OKEX+0.16", "0.09", "", "0.024", "0元", "501-30000", "110-30000", "110-50000", "5元", "", "", "127", "✔️", "✔️", "", "", "", "", "", ""],
+      ["", "99支付宝-梅西【proali99】1/15 (冻结1:1.5)", "已开跑", "8/12 单选商户 / 要比照pro999设置单选 / 2024/12/24 上面通知关闭梅西渠道 / 2025/1/15 多通知可开,賠付是1:1.5觀察一個月", "8/8 创群", "测试站 proali99 / 正式站 proali99", "-4211898837", "❌", "❌", "OKEX+0.15", "", "", "0.028", "0元", "110-30000", "110-50000", "110-50000", "5元", "", "", "94", "✔️", "❌", "", "", "", "", "", "✔️"],
+      ["无代理", "99支付宝【BR7788】", "已开跑", "8/13开侧测试商户", "", "测试站 BR7788 / 正式站 BR7788", "-4237521740", "", "", "OKEX+0.16", "", "", "0.024", "0元", "501-30000", "110-30000", "110-30000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["V / @sky_777777", "99支付宝-【v7pay】", "已开跑", "", "24/8/21创群", "测试站vmspay88 / 正式站 v7pay", "-4590091625", "", "", "OKEX+0.16", "", "", "0.028", "0元", "501-30000", "110-30000", "110-30000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["乐乐 / @joanne_520512", "99支付-【mvod2】-BC", "已开跑", "2025/2/25已开测站等对接中 / 3/1开跑", "2026/02/25", "正式站 mvod2", "-2491562096", "", "", "OKEX+0.16", "OKEX+0.09", "", "0.034", "0元", "501-30000", "110-30000", "110-30000", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["TOMMY / @tomychenn", "99支付宝-【nobu666】-单选商户", "已开跑", "7/9 开户", "", "测试站 nobu666 / 正式站 nobu666", "-5120554904", "❌", "❌", "OKEX+0.16", "", "", "0.024", "0元", "501-30000", "110-15000", "110-15000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["以下不使用", "以下不使用", "以下不使用", "以下不使用", "以下不使用", "以下不使用", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["无代理", "99支付-TF-【tf5678/tf1234/tf8888/xlh888】", "已开跑", "10/28 开跑", "", "正式站 xlh888", "", "", "", "OKEX+0.16", "", "", "0.024", "0元", "501-30000", "110-30000", "110-30000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["Yyu Yeager / @iuu_uy", "99支付宝-【88ZHUZHU】BBIN", "对接中", "", "2024/07/31", "测试站 8ZHUZHU / 正式站 88ZHUZHU", "", "", "", "OKEX+0.17", "", "", "0.039", "3元", "110-30000", "110-30000", "110-30000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["NANA / @nananababay", "99支付宝-【 NNNA1688】", "对接中", "10/16 已开测试站", "2024/10/16", "测试站NNNA1688", "", "", "", "OKEX+0.17", "", "", "0.035", "3元", "501-30000", "110-30000", "110-30000", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["", "99支付-86電子-【TF8686】", "对接中", "7/4 对接网银有谘询支付宝问题 / 但尚未开支付宝给对方", "", "测试站 TF8686", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["Adam", "99支付宝-【LJ888】", "对接中", "8/31 告知要单选", "24/8/18 / 伏特加 / 格兰莉葳 / 金燕2.0 谢", "测试站 LJ888", "", "❌", "", "OKEX+0.17", "", "", "0.034", "3元", "501-30000", "110-30000", "110-30000", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["ABC / @ABC_67889", "99支付-【hc678】", "对接中", "8/28 等网银对接中", "2026/08/28", "未开号", "", "", "", "OKEX+0.17", "", "", "0.028", "3元", "501-30000", "110-30000", "110-30000", "5元", "", "", "", "", "", "", "", "", "", "", ""],
+      ["乐乐 / @joanne_520512", "99支付宝-【 XYZFB9】", "对接中", "8/29 已开测站等对接中", "2026/08/29", "测试站 XYZFB9", "", "", "", "OKEX+0.17", "", "", "0.033", "3元", "501-30000", "110-30000", "110-30000", "", "", "", "", "", "", "", "", "", "", "", ""]
+    ] },
+    { name:"纯代付", rows:[
+      ["代理", "给代理汇率", "99支付orBB", "飞机名称", "對接狀況", "對接记录", "创群时间/ / 群内成员", "类型", "商户名", "群组ID", "充U费率", "出款费率", "代付金额范围", "出款配对超时（分）", "下发金额范围", "username / 用户帐号"],
+      ["TOP", "x", "99支付", "PAY梅西（纯代付）", "已开跑", "24/2/5 需要重新对接 / 24/2/6 已开正式站", "2024/02/05", "", "pay999", "-2117235700", "OKEX+0.11", "3元", "110-50000", "60", "110-50000", "✔️"],
+      ["滐 @mv686868", "0.13", "99支付", "滐和💮维尼ღ", "已开跑", "2/12 开正式号了 / 3/16 代付金额：调整最高20000", "2024/02/03", "", "QAQ662", "-2125494445", "OKEX+0.02", "2元", "110-10000", "30", "110-10000", ""],
+      ["", "", "99支付", "99纯代付卡卡【dhgbig88】支付宝 【dhgbig99】 / 99纯代付卡卡【dajin88】", "已开跑", "24/9/25 开测试号", "2024/09/19", "", "卡卡纯代付 dhgbig88 / 卡卡纯代付 dajin88 / 支付宝 dhgbig99", "-2441685161", "OKEX+0.05", "0元", "110-30000", "40", "110-30000", ""],
+      ["", "", "99支付宝", "99支付宝纯代付-【 jinyang1】-上浮+0.04", "已开跑", "24/9/25 开测试号 / 24/10/11 开正式号", "2024/09/25", "", "测试站 jinyang1 / 正式站 jinyang1", "-4852183835", "OKEX+0.07", "0元", "110-30000", "", "110-30000", ""],
+      ["Yyu Yeager", "0.13", "99支付", "99API纯代付【WXC88】-押金3000U", "已开跑", "24/10/14 开测试号 / 24/11/12 开正式号", "2024/10/14", "", "WXC88", "-2466331571", "OKEX+0.05", "0元", "110-30000", "", "", ""],
+      ["V @sky_777777", "", "99支付宝", "99支付【V7payzf】支付宝纯代付", "已开跑", "1/9啦群", "2025/01/09", "支付宝", "V7payzf", "-4685471237", "OKEX+0.16", "0元", "110-10000", "90", "110-30000", ""],
+      ["", "", "99支付宝", "99支付【Vzfb20】支付宝纯代付", "已开跑", "1/14 拉群", "2025/01/14", "支付宝", "Vzfb20", "-4682829491", "OKEX+0.2", "0元", "110-10000", "480", "110-30000", ""],
+      ["", "", "99支付宝", "99支付【VzfbSK88】支付宝纯代付", "已开跑", "2025/1/17 拉群", "2025/01/17", "支付宝", "VzfbSK88", "-4672832107", "OKEX+0.2", "0元", "110-10000", "480", "110-30000", ""],
+      ["Messi@AV8D_18667", "0.13", "BBP", "BB - TT纯代付【gpay0198】", "已开跑", "无API，商户自己手动绑卡下发", "2024/04/28", "支付宝", "gpay0198", "BB的纯代付", "OKEX+0.11", "1元", "110-10000", "20", "110-50000", ""],
+      ["WF", "", "BBP", "WF-【BBP纯代付】", "已开跑", "", "", "", "WF", "BB的纯代付", "OKEX+0.11", "0元", "110-10000", "180", "110-10000", ""],
+      ["", "", "99支付", "环宇纯代付", "已开跑", "", "2024/02/15", "", "PF0021", "纯代付", "OKEX+0.1", "3元", "2000-9999", "", "", ""],
+      ["", "", "99支付", "贴卡小额纯代付", "已开跑", "", "2024/01/29", "", "TEST01", "纯代付", "OKEX+0.1", "3元", "2000-9999", "", "", ""],
+      ["以下不使用", "以下不使用", "以下不使用", "以下不使用", "以下不使用", "以下不使用", "", "", "", "", "", "", "", "", "", ""],
+      ["Yyu Yeager / @iuu_uy", "0.13", "99支付", "AA035 99支付-KT1688纯代付", "对接中", "8/12 开正式号", "2024/08/12", "", "KT1688", "", "多通知目前不给充 / 请他去kt168888", "0元", "110-30000", "", "110-30000", ""],
+      ["D旺旺 / @Tu_no1", "", "99支付", "99支付-【ddd4343】纯代付", "对接中", "24/12/25 开测试号", "2024/12/25", "网银", "ddd4343", "", "OKEX+0.11", "3元", "110-30000", "20", "110-30000", ""],
+      ["", "", "99支付", "99支付宝代付 - 99bebe", "对接中", "24/12/23 直接开正式站了", "2024/12/23", "支付宝", "99bebe", "", "OKEX+0.12", "0元", "110-10000", "40", "110-10000", ""],
+      ["", "", "99支付宝", "99支付宝-开元体育纯代付【8886vip】", "对接中", "24/09/12 已开测试站", "2024/09/12", "", "8886vip", "", "OKEX+0.05", "3元", "110-30000", "", "110-30000", ""],
+      ["滐 @mv686868", "", "99支付宝", "99 支付宝-【mayiyy01】", "对接中", "9/16 测试号已开 / 9/17 因返回状态码无法配合 / 停止对接", "2024/09/16", "", "", "", "OKEX+0.05", "0元", "110-10000", "20", "110-10000", ""],
+      ["滐 @mv686868", "", "99支付宝", "代付宝到宝上浮+0.01", "对接中", "24/9/25 开测试号", "2024/09/25", "", "测试站 zhong123", "", "OKEX++0.01", "0元", "110-10000", "？", "110-10000", ""],
+      ["Messi@AV8D_18667", "0.1", "BBP", "TT纯代付【win001】", "已开跑", "（商户提现代付）", "", "", "WIN001", "", "OKEX+0.09", "3元", "-", "30", "110-50000", ""],
+      ["Messi@AV8D_18667", "0.1", "BBP", "TT纯代付【win002】", "已开跑", "（商户提现代付）", "", "", "WIN002", "", "OKEX+0.06", "3元", "-", "30", "110-50000", ""],
+      ["Messi@AV8D_18667", "0.18", "BBP", "Kk代理群", "尚未", "无API，商户自己手动绑卡下发", "", "", "mavis788", "", "OKEX+0.07", "3元", "", "50", "110-50000", ""],
+      ["龙鲸 / @aa778998", "0.15", "BBP", "LS296698-【BBP纯代付】-110-30000 U+0.15+2元单笔", "已开跑", "（商户提现代付）", "", "", "LS296698", "", "OKEX+0.15", "1元", "110-30000", "60", "110-30000", ""]
+    ] }
+  ];
   var state = load();
   var view = "home";          // "home" | "topic"
   var curTopic = null;        // topic id
@@ -1027,6 +1095,15 @@
     if(!qa.sheetCache || !qa.sheetCache.rows || !qa.sheetCache.rows.length){
       qa.sheetCache={ rows:QA_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false };
     }
+    // 规章：三個分頁（商户对接/特殊审单/纯代付）
+    var gz=find(GUIZHANG_NAME);
+    if(!gz){ gz={ id:uid(), name:GUIZHANG_NAME, color:COLORS[3%COLORS.length], icon:"📋", items:[] }; d.topics.push(gz); }
+    gz.name=GUIZHANG_NAME; gz.sheetUrl=""; gz.sheetTab="";
+    if(!gz.sections || !gz.sections.length){
+      gz.sections=GUIZHANG_SEED.map(function(sec){ return { name:sec.name, rows:sec.rows.map(function(r){return r.slice();}) }; });
+    }
+    if(typeof gz.secIdx!=="number" || gz.secIdx<0 || gz.secIdx>=gz.sections.length) gz.secIdx=0;
+    if(!gz.sheetCache) gz.sheetCache={ at:Date.now(), seed:false, rows:[] };
     // 預設：每次登入（載入）鎖定所有內容避免誤改；但「加减」保持解鎖以維持自動更新
     d.topics.forEach(function(t){ t.locked = (t.name!=="加减"); });
     return d;
@@ -1051,6 +1128,12 @@
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function topicById(id){ for(var i=0;i<state.topics.length;i++){ if(state.topics[i].id===id) return state.topics[i]; } return null; }
+  function rowsOf(t){
+    if(!t) return null;
+    if(t.sections && t.sections.length) return t.sections[t.secIdx||0].rows;
+    return t.sheetCache ? t.sheetCache.rows : null;
+  }
+  function touchRows(t){ if(t && t.sheetCache) t.sheetCache.seed=false; }
 
   /* ---------- helpers ---------- */
   var $ = function(id){ return document.getElementById(id); };
@@ -1178,7 +1261,8 @@
     renderSheetBlock(t);
 
     // 表格型主題（連動/固定表）隱藏「項目清單＋輸入列」，只用表格本身
-    var isSheetTopic = !!(t.sheetUrl || (t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length));
+    var __rw=rowsOf(t);
+    var isSheetTopic = !!(t.sheetUrl || (__rw && __rw.length));
     var bar=$("addItemBar"); if(bar) bar.classList.toggle("hidden", isSheetTopic);
     if(isSheetTopic){
       $("itemList").innerHTML="";
@@ -1480,7 +1564,8 @@
     var annoMap = (topicById(curTopic)||{}).anno || {};
     var isSwitch = ((topicById(curTopic)||{}).name === SWITCH_NAME);
     var __cn=(topicById(curTopic)||{}).name;
-    var isNotes = (__cn === NOTES_NAME || __cn === IMPORTANT_NAME || __cn === QA_NAME);
+    var isNotes = (__cn === NOTES_NAME || __cn === IMPORTANT_NAME || __cn === QA_NAME || __cn === GUIZHANG_NAME);
+    var isQA = (__cn === QA_NAME);
     var locked = !!(topicById(curTopic)||{}).locked;
     // 隱藏完全空白的欄（表頭與全部資料皆空）
     var showCol=[];
@@ -1583,7 +1668,7 @@
           var hcol=String(head[k2]!=null?head[k2]:"");
           var isShuo=/说明|說明/.test(hcol);
           var isFirstCol=(k2===firstVisCol);
-          var isType=/类型|類型/.test(hcol);
+          var isType=isQA && /类型|類型/.test(hcol);
           var an=(isFirstCol && !isType) ? (annoMap[ridx]||"") : "";
           if(locked){
             if(isType){
@@ -1783,9 +1868,9 @@
     if(!el || !el.classList) return;
     var isSel=el.classList.contains("cell-sel"), isEdit=el.classList.contains("cell-edit");
     if(!isSel && !isEdit) return;
-    var t=topicById(curTopic); if(!t || !t.sheetCache || !t.sheetCache.rows) return;
+    var t=topicById(curTopic); if(!t || !rowsOf(t)) return;
     var r=parseInt(el.getAttribute("data-r"),10), c=parseInt(el.getAttribute("data-c"),10);
-    var rows=t.sheetCache.rows;
+    var rows=rowsOf(t);
     if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=el.value; }
     t.sheetCache.seed=false;
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
@@ -1797,7 +1882,7 @@
       e.stopPropagation();
       var t=topicById(curTopic); if(!t || !t.sheetCache) return;
       var r=parseInt(tg.getAttribute("data-r"),10), c=parseInt(tg.getAttribute("data-c"),10);
-      var rows=t.sheetCache.rows, cur=String((rows[r]||[])[c]!=null?(rows[r]||[])[c]:"").trim();
+      var rows=rowsOf(t), cur=String((rows[r]||[])[c]!=null?(rows[r]||[])[c]:"").trim();
       var next = /^(✓|✔|√|v|是|ok|有|開啟|开启)$/i.test(cur) ? "✕" : "✓";
       if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=next; }
       t.sheetCache.seed=false;
@@ -1818,9 +1903,9 @@
     var rd=e.target.closest ? e.target.closest(".row-del") : null;
     if(rd){
       e.stopPropagation();
-      var td=topicById(curTopic); if(!td || !td.sheetCache || !td.sheetCache.rows) return;
+      var td=topicById(curTopic); var trs=rowsOf(td); if(!td || !trs) return;
       var rr=parseInt(rd.getAttribute("data-r"),10);
-      if(rr>0 && rr<td.sheetCache.rows.length){ td.sheetCache.rows.splice(rr,1); td.sheetCache.seed=false; save(); renderHome(); }
+      if(rr>0 && rr<trs.length){ trs.splice(rr,1); touchRows(td); save(); renderHome(); }
       return;
     }
     var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
@@ -1881,7 +1966,8 @@
   }
   function renderSheetBlock(t){
     var box=$("sheetBlock");
-    var hasData = t && t.sheetCache && t.sheetCache.rows && t.sheetCache.rows.length;
+    var __rows = rowsOf(t);
+    var hasData = t && __rows && __rows.length;
     var linked = !!(t && t.sheetUrl);
     if(!t || (!linked && !hasData)){ box.classList.add("hidden"); box.innerHTML=""; return; }
     box.classList.remove("hidden");
@@ -1906,6 +1992,13 @@
        + '</div>';
     }
     if(hasData){
+      if(t.sections && t.sections.length>1){
+        h+='<div class="qa-tabs">';
+        t.sections.forEach(function(sec,si){
+          h+='<button type="button" class="qa-tab sec-tab'+((t.secIdx||0)===si?" sel":"")+'" data-sec="'+si+'">'+esc(sec.name)+'</button>';
+        });
+        h+='</div>';
+      }
       if(t.name===QA_NAME){
         var qf=fval;
         h+='<div class="qa-tabs">'
@@ -1919,8 +2012,8 @@
        + '<input id="sheetFilter" type="text" placeholder="關鍵字篩選…" value="'+esc(fval)+'">'
        + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
        + '</div>';
-      h+='<div id="sheetTableWrap">'+renderTable(t.sheetCache.rows, fval)+'</div>';
-      if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME) && !t.locked){
+      h+='<div id="sheetTableWrap">'+renderTable(__rows, fval)+'</div>';
+      if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME || t.name===GUIZHANG_NAME) && !t.locked){
         h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="notesAddRow">＋ 新增一筆</button></div>';
       }
     }
@@ -1939,8 +2032,8 @@
     box.innerHTML=h;
     var nar=$("notesAddRow");
     if(nar) nar.addEventListener("click", function(){
-      if(!t.sheetCache || !t.sheetCache.rows) return;
-      var hdr=t.sheetCache.rows[0]||["","","",""];
+      var arows=rowsOf(t); if(!arows) return;
+      var hdr=arows[0]||["","","",""];
       var ncol=hdr.length || 4;
       var nr=[]; for(var i=0;i<ncol;i++) nr.push("");
       if(t.name===QA_NAME){
@@ -1948,14 +2041,21 @@
         var cur=sheetFilters[t.id]||"";
         if(tc>-1) nr[tc]=(cur==="出货"||cur==="进货"||cur==="特殊")?cur:"出货";
       }
-      t.sheetCache.rows.push(nr); t.sheetCache.seed=false; save();
+      arows.push(nr); touchRows(t); save();
       if(t.name!==QA_NAME) sheetFilters[t.id]="";   // 清篩選確保新列看得到（Q&A 保留所選類型）
       renderSheetBlock(t);
       var inps=document.querySelectorAll('#sheetTableWrap tbody tr:last-child input.cell-edit');
       if(inps && inps.length) inps[0].focus();
     });
     Array.prototype.forEach.call(document.querySelectorAll(".qa-tab"), function(b){
-      b.addEventListener("click", function(){ sheetFilters[t.id]=b.getAttribute("data-qa")||""; renderSheetBlock(t); });
+      if(b.hasAttribute("data-sec")){
+        b.addEventListener("click", function(){
+          t.secIdx=parseInt(b.getAttribute("data-sec"),10)||0;
+          sheetFilters[t.id]=""; save(); renderSheetBlock(t);
+        });
+      }else{
+        b.addEventListener("click", function(){ sheetFilters[t.id]=b.getAttribute("data-qa")||""; renderSheetBlock(t); });
+      }
     });
     var rb=$("sheetRefresh");
     if(rb) rb.addEventListener("click", function(){ syncSheet(t.id); });
