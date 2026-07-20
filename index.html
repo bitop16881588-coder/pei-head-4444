@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.7.0/style.css">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* 可愛圓體（jf-openhuninn），載入失敗會自動退回 Noto Sans TC */
   @font-face{
@@ -328,6 +327,33 @@
   .qa-tab.inc.sel{background:#3fb87d}
   .qa-tab.spc.sel{background:#8a7fb0}
   .qa-tab.sec-tab.sel{background:#c2925f}
+  /* 卡片式 */
+  .view-sw{display:flex;gap:6px;margin:0 2px 10px}
+  .mini-btn.vw.on{background:var(--accent);color:#fff;border-color:transparent}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .rcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 15px;
+    box-shadow:0 2px 6px rgba(150,110,90,.06),0 10px 24px rgba(150,110,90,.08);transition:.15s}
+  .rcard:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(150,110,90,.10),0 16px 32px rgba(150,110,90,.14)}
+  .rcard.dim{opacity:.5}
+  .rc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .rc-title{font-weight:800;font-size:16px;color:var(--ink);flex:1;word-break:break-word;line-height:1.35}
+  .rc-st{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;flex:0 0 auto}
+  .rc-st.st-run{background:#dcefe0;color:#2f8a52}
+  .rc-st.st-doing{background:#fdecd8;color:#b5751f}
+  .rc-st.st-off{background:#f0eded;color:#999}
+  .rc-st.st-none{background:#eee;color:#888}
+  .rc-sub{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .rc-chip{font-size:12px;background:var(--accent-soft);color:#8a6f63;padding:2px 9px;border-radius:999px}
+  .rc-grp{border-top:1px dashed var(--line);padding-top:8px;margin-top:8px}
+  .rc-gt{font-size:11.5px;font-weight:800;color:var(--ink-soft);letter-spacing:.6px;margin-bottom:6px}
+  .rc-kvs{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+  .rc-kv{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .rc-k{font-size:11px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rc-v{font-size:13.5px;font-weight:600;color:var(--ink);word-break:break-word}
+  .rc-note{margin-bottom:6px}
+  .rc-nv{display:block;font-size:12.5px;color:#6a564f;line-height:1.5;word-break:break-word;
+    background:#fffaf6;border-radius:8px;padding:5px 8px;margin-top:2px}
+  @media(max-width:520px){ .card-grid{grid-template-columns:1fr} .rc-kvs{grid-template-columns:1fr} }
   /* 规章：寬表可讀性 */
   td.editcell .cell-edit{min-width:90px}
   td.mc-anno .cell-edit{min-width:120px}
@@ -655,7 +681,6 @@
           <rect x="16.8" y="13.1" width="2.2" height="6.1" rx="0.7" fill="#f5a623"/>
         </svg>
       </button>
-      <button class="ghost-btn" id="gAuthBtn">Google</button>
       <button class="ghost-btn" id="exportBtn">匯出</button>
       <button class="ghost-btn" id="importBtn">匯入</button>
     </header>
@@ -968,7 +993,7 @@
   ];
   var GUIZHANG_NAME="规章";
   var GUIZHANG_SEED=[
-    { name:"商户对接", rows:[
+    { name:"网银", rows:[
       ["代理", "飞机名称", "對接狀況", "對接记录", "创群时间/ / 群内成员", "商户名", "群组ID", "多选一", "百元倍数", "9/7 换U费率", "充U费率", "回U特殊规则", "入款费率", "出款费率", "支付宝出款费率", "代收金额范围", "代付金额范围", "下发金额范围", "未实名充值手续费", "查询小白单费用", "BBP商户号（单选）", "BBP商户号（多选）", "username / 用户帐号", "是否有支援实际金额参数", "NEW三选一模式", "商户验盘", "押金", "放置限额"],
       ["TOP", "TF / （隶属于内部）", "已开跑", "2023/6/20已开跑", "", "tf5678", "-5013755079", "✔️", "❌", "OKEX+0.16", "OKEX+0.09", "", "0.02", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "87", "42", "✔️", "✔️", "-", "1", "", "3A"],
       ["", "TF / （隶属于内部）", "已开跑", "2024/3/25 要开商户号 / 2024/3/26 已开跑", "", "tf1234", "-5013755079", "✔️", "❌", "OKEX+0.2", "OKEX+0.09", "", "0.02", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "87", "42", "✔️", "✔️", "-", "1", "", "3A"],
@@ -983,7 +1008,7 @@
       ["", "99支付-【yoobo518】【du8988】", "已开跑", "", "2024/05/03", "测试yoobo518 / 正式站 yobo5188", "-4279612083", "✔️", "", "OKEX+0.18", "", "", "0.023", "0元", "", "110-30000", "110-50000", "110-50000", "5元", "", "", "", "", "", "", "", "", ""],
       ["", "99支付-【yoobo518】【du8988】", "已开跑", "", "2024/05/03", "测试du8988 / 正式站 dudu8988", "-4279612083", "", "", "OKEX+0.2", "", "", "", "0元", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
     ] },
-    { name:"特殊审单", rows:[
+    { name:"支付宝", rows:[
       ["代理", "飞机名称", "對接狀況", "對接记录", "创群时间/ / 群内成员", "商户名", "群组ID", "多选一", "百元倍数", "9/7 换U费率", "充U费率", "回U特殊规则", "入款费率", "出款费率", "代收金额范围", "代付金额范围", "下发金额范围", "未实名充值手续费", "查询小白单费用", "BBP商户号（单选）", "BBP商户号（多选）", "username / 用户帐号", "是否有支援实际金额参数", "NEW三选一模式", "商户验盘", "押金", "放置限额", "", ""],
       ["", "西瓜", "已开跑", "7/2开户", "", "SY0001.FL0001.WX0001 / TS0001.XC0001.XH0001 / TF0001.TC0001,CJ0001,CY0001,YD0001", "-2456306033", "0", "❌", "OKEX+0.16", "", "", "0.024", "0元", "501-30000", "110-30000", "110-50000", "5元", "", "", "127", "✔️", "✔️", "", "", "", "", "", "无需"],
       ["", "99支付-11哥【shifang1 / sfpay1】", "已开跑", "7/3开户", "", "测试站 sfpay1 / 正式站 sfpay1", "-4102343393", "✔️", "❌", "OKEX+0.16", "0.09", "", "0.024", "0元", "501-30000", "110-30000", "110-50000", "5元", "", "", "127", "✔️", "✔️", "", "", "", "", "", ""],
@@ -1057,8 +1082,8 @@
     // 加减：連動 + 內建金額快照（免登入先看快照）
     var ta=find("加减");
     if(!ta){ ta={ id:uid(), name:"加减", color:COLORS[1], icon:"💰", items:[] }; d.topics.unshift(ta); }
-    ta.sheetUrl=PINNED_FIRST_SHEET;
-    if(!ta.sheetCache || ta.sheetCache.seed){ ta.sheetCache={ rows:PINNED_FIRST_SEED, at:Date.now(), seed:true }; }
+    ta.sheetUrl=""; ta.sheetTab="";
+    if(!ta.sheetCache || !ta.sheetCache.rows || !ta.sheetCache.rows.length){ ta.sheetCache={ rows:PINNED_FIRST_SEED.map(function(r){return r.slice();}), at:Date.now(), seed:false }; }
     // 开关：永久固定、不連動，內建截圖快照
     var sw=find(SWITCH_NAME);
     if(!sw){ for(var k=0;k<SWITCH_OLDNAMES.length && !sw;k++) sw=find(SWITCH_OLDNAMES[k]); }
@@ -1102,6 +1127,8 @@
     if(!gz.sections || !gz.sections.length){
       gz.sections=GUIZHANG_SEED.map(function(sec){ return { name:sec.name, rows:sec.rows.map(function(r){return r.slice();}) }; });
     }
+    var _secRename={"商户对接":"网银","特殊审单":"支付宝"};
+    gz.sections.forEach(function(sec){ if(_secRename[sec.name]) sec.name=_secRename[sec.name]; });
     if(typeof gz.secIdx!=="number" || gz.secIdx<0 || gz.secIdx>=gz.sections.length) gz.secIdx=0;
     if(!gz.sheetCache) gz.sheetCache={ at:Date.now(), seed:false, rows:[] };
     // 預設：每次登入（載入）鎖定所有內容避免誤改；但「加减」保持解鎖以維持自動更新
@@ -1547,6 +1574,74 @@
     }
     if(cur.length||row.length){ row.push(cur); rows.push(row); }
     return rows.filter(function(r){ return r.some(function(x){return x!=="";}); });
+  }
+  // 卡片式（规章）：一列一張卡片，欄位分組
+  var CARD_GROUPS=[
+    { key:"rate",  title:"费率",   icon:"💱", re:/费率|手续费|汇率|回U特殊规则|费用/ },
+    { key:"amt",   title:"金额",   icon:"💰", re:/金额范围|限额|押金|超时|倍数/ },
+    { key:"acct",  title:"帐号",   icon:"🔑", re:/BBP商户号|username|用户帐号|群组ID/ },
+    { key:"other", title:"其他",   icon:"🔖", re:/多选一|三选一|实际金额参数|验盘|类型|99支付orBB/ }
+  ];
+  function statusClass(v){
+    if(/已开跑/.test(v)) return "st-run";
+    if(/对接中|對接中/.test(v)) return "st-doing";
+    if(/不使用/.test(v)) return "st-off";
+    return "st-none";
+  }
+  function renderCards(rows, filter){
+    if(!rows || !rows.length) return '<div class="sheet-empty">沒有資料</div>';
+    var head=rows[0]||[], q=(filter||"").trim().toLowerCase();
+    var data=rows.slice(1).filter(function(r){ return r.some(function(c){ return String(c==null?"":c).trim()!==""; }); });
+    if(q) data=data.filter(function(r){ return r.some(function(c){ return String(c==null?"":c).toLowerCase().indexOf(q)>-1; }); });
+    // 欄位索引
+    function findCol(re){ for(var i=0;i<head.length;i++){ if(re.test(String(head[i]||""))) return i; } return -1; }
+    var cMerchant=findCol(/商户名/), cStatus=findCol(/對接狀況|对接状况/), cAgent=findCol(/^代理$/),
+        cPlane=findCol(/飞机名称/), cRec=findCol(/對接记录|对接记录/), cGroup=findCol(/创群时间/);
+    var used={}; [cMerchant,cStatus,cAgent,cPlane].forEach(function(i){ if(i>-1) used[i]=true; });
+    var h='<div class="card-grid">';
+    if(!data.length) h+='<div class="sheet-empty">沒有符合的資料</div>';
+    data.forEach(function(r, di){
+      var mer=cMerchant>-1?String(r[cMerchant]||"").trim():"";
+      var pln=cPlane>-1?String(r[cPlane]||"").trim():"";
+      var title=mer||pln||"（未命名）";
+      var st=cStatus>-1?String(r[cStatus]||"").trim():"";
+      var ag=cAgent>-1?String(r[cAgent]||"").trim():"";
+      h+='<div class="rcard'+(/不使用/.test(st)?" dim":"")+'">';
+      h+='<div class="rc-head"><div class="rc-title">'+esc(title)+'</div>'
+       + (st?'<span class="rc-st '+statusClass(st)+'">'+esc(st)+'</span>':'')+'</div>';
+      if(ag||pln) h+='<div class="rc-sub">'+(ag?'<span class="rc-chip">👤 '+esc(ag)+'</span>':'')
+                   + (pln&&mer?'<span class="rc-chip">✈️ '+esc(pln)+'</span>':'')+'</div>';
+      // 分組
+      CARD_GROUPS.forEach(function(g){
+        var items="";
+        for(var i=0;i<head.length;i++){
+          var hd=String(head[i]||"").trim(); if(!hd || used[i]) continue;
+          if(!g.re.test(hd)) continue;
+          var v=String(r[i]==null?"":r[i]).trim(); if(!v) continue;
+          used[i]=true;
+          items+='<div class="rc-kv"><span class="rc-k">'+esc(hd)+'</span><span class="rc-v">'+esc(v)+'</span></div>';
+        }
+        if(items) h+='<div class="rc-grp"><div class="rc-gt">'+g.icon+' '+g.title+'</div><div class="rc-kvs">'+items+'</div></div>';
+      });
+      // 記錄/備註類（長文字）
+      var notes="";
+      [cRec,cGroup].forEach(function(i){
+        if(i<0) return; var v=String(r[i]==null?"":r[i]).trim(); if(!v) return; used[i]=true;
+        notes+='<div class="rc-note"><span class="rc-k">'+esc(String(head[i]||"").replace(/ \/ /g,"／"))+'</span><span class="rc-nv">'+esc(v)+'</span></div>';
+      });
+      if(notes) h+='<div class="rc-grp"><div class="rc-gt">📝 記錄</div>'+notes+'</div>';
+      // 剩餘欄位
+      var rest="";
+      for(var i2=0;i2<head.length;i2++){
+        var hd2=String(head[i2]||"").trim(); if(!hd2 || used[i2]) continue;
+        var v2=String(r[i2]==null?"":r[i2]).trim(); if(!v2) continue;
+        rest+='<div class="rc-kv"><span class="rc-k">'+esc(hd2)+'</span><span class="rc-v">'+esc(v2)+'</span></div>';
+      }
+      if(rest) h+='<div class="rc-grp"><div class="rc-gt">📌 其他</div><div class="rc-kvs">'+rest+'</div></div>';
+      h+='</div>';
+      used={}; [cMerchant,cStatus,cAgent,cPlane].forEach(function(i){ if(i>-1) used[i]=true; });
+    });
+    return h+'</div>';
   }
   function renderTable(rows, filter){
     var MAX=1000;
@@ -1999,6 +2094,10 @@
         });
         h+='</div>';
       }
+      if(t.sections && t.sections.length>1){
+        h+='<div class="view-sw"><button type="button" class="mini-btn vw'+(t.view!=="table"?" on":"")+'" data-vw="card">🗂 卡片</button>'
+         + '<button type="button" class="mini-btn vw'+(t.view==="table"?" on":"")+'" data-vw="table">📊 表格</button></div>';
+      }
       if(t.name===QA_NAME){
         var qf=fval;
         h+='<div class="qa-tabs">'
@@ -2012,8 +2111,9 @@
        + '<input id="sheetFilter" type="text" placeholder="關鍵字篩選…" value="'+esc(fval)+'">'
        + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
        + '</div>';
-      h+='<div id="sheetTableWrap">'+renderTable(__rows, fval)+'</div>';
-      if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME || t.name===GUIZHANG_NAME) && !t.locked){
+      var __useCard = (t.sections && t.sections.length>1 && t.view!=="table");
+      h+='<div id="sheetTableWrap">'+(__useCard?renderCards(__rows, fval):renderTable(__rows, fval))+'</div>';
+      if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME || t.name===GUIZHANG_NAME) && !t.locked && !__useCard){
         h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="notesAddRow">＋ 新增一筆</button></div>';
       }
     }
@@ -2046,6 +2146,9 @@
       renderSheetBlock(t);
       var inps=document.querySelectorAll('#sheetTableWrap tbody tr:last-child input.cell-edit');
       if(inps && inps.length) inps[0].focus();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".vw"), function(b){
+      b.addEventListener("click", function(){ t.view=b.getAttribute("data-vw"); save(); renderSheetBlock(t); });
     });
     Array.prototype.forEach.call(document.querySelectorAll(".qa-tab"), function(b){
       if(b.hasAttribute("data-sec")){
@@ -2653,10 +2756,6 @@
   $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
   $("importFile").addEventListener("change", function(e){ if(e.target.files[0]) doImport(e.target.files[0]); e.target.value=""; });
 
-  $("gAuthBtn").addEventListener("click", function(){
-    if(gToken){ if(confirm("要登出 Google 嗎？")) gSignOut(); }
-    else gConnect();
-  });
 
   // 計算機
   $("calcBtn").addEventListener("click", openCalc);
@@ -2740,17 +2839,6 @@
     }
   });
 
-  // 之前登入過就嘗試靜默取回授權（等 GIS 載入）
-  if(GOOGLE_CLIENT_ID && localStorage.getItem("gConnected")){
-    var _tries=0, _iv=setInterval(function(){
-      _tries++;
-      if(gReady()){ clearInterval(_iv); ensureTokenClient();
-        pendingAfterAuth=function(){ if(curTopic){ var t=topicById(curTopic); if(t && t.sheetUrl) syncSheet(curTopic); } };
-        gConnect();
-      }
-      else if(_tries>25){ clearInterval(_iv); }
-    },200);
-  }
 })();
 </script>
 </body>
