@@ -355,6 +355,11 @@
     background:#fffaf6;border-radius:8px;padding:5px 8px;margin-top:2px}
   .card-divider{grid-column:1/-1;text-align:center;font-weight:800;color:var(--accent);
     font-size:14px;letter-spacing:1px;padding:6px 0;border-top:2px dashed var(--line);margin-top:4px}
+  .card-edit-btn{border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;
+    font-size:14px;width:28px;height:28px;border-radius:9px;flex:0 0 auto;line-height:1;transition:.12s}
+  .card-edit-btn:hover{background:var(--accent);color:#fff;transform:scale(1.08)}
+  #cardModal .sheet{max-height:86vh;overflow:auto}
+  #cardFields .field{margin-bottom:12px}
   @media(max-width:520px){ .card-grid{grid-template-columns:1fr} .rc-kvs{grid-template-columns:1fr} }
   /* 规章：寬表可讀性 */
   td.editcell .cell-edit{min-width:90px}
@@ -743,6 +748,19 @@
 </div>
 
 <!-- ===== TOPIC MODAL (新增 / 編輯主題) ===== -->
+<div class="overlay" id="cardModal">
+  <div class="sheet">
+    <h3 id="cardModalTitle">編輯</h3>
+    <div id="cardFields"></div>
+    <div class="sheet-actions">
+      <button class="ghost-btn" id="cardCancel">取消</button>
+      <button class="pill-btn" id="cardSaveBtn">儲存</button>
+    </div>
+    <div class="del-topic" id="cardDelWrap">
+      <button id="cardDelBtn">刪除這筆</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="topicModal">
   <div class="sheet">
     <h3 id="modalTitle">新增主題</h3>
@@ -1263,6 +1281,45 @@
     return t.sheetCache ? t.sheetCache.rows : null;
   }
   function touchRows(t){ if(t && t.sheetCache) t.sheetCache.seed=false; }
+  var cardEdit=null; // { topicId, rowIdx }
+  var CARD_LONG_EDIT=/规则|規則|冻结|風控|风控|對接记录|对接记录|创群时间|说明|說明|费率|費率|回U/;
+  function openCardEdit(t, rowIdx){
+    var rows=rowsOf(t); if(!rows) return;
+    var head=rows[0]||[], row=rows[rowIdx]||[];
+    cardEdit={ topicId:t.id, rowIdx:rowIdx };
+    var nameCol=-1; for(var i=0;i<head.length;i++){ if(/商户名|^名称$|^名稱$/.test(String(head[i]||""))){ nameCol=i; break; } }
+    $("cardModalTitle").textContent = (nameCol>-1 && String(row[nameCol]||"").trim()) ? ("編輯：" + String(row[nameCol]).trim()) : "編輯";
+    var h="";
+    for(var c=0;c<head.length;c++){
+      var hd=String(head[c]||"").trim(); if(!hd) continue;
+      var v=String(row[c]==null?"":row[c]);
+      var isLong=CARD_LONG_EDIT.test(hd) || v.length>28 || v.indexOf(" / ")>-1;
+      h+='<div class="field"><label>'+esc(hd.replace(/ \/ /g,"／"))+'</label>';
+      if(isLong) h+='<textarea class="cm-in" data-c="'+c+'" rows="3">'+esc(v)+'</textarea>';
+      else h+='<input class="cm-in" type="text" data-c="'+c+'" value="'+esc(v)+'">';
+      h+='</div>';
+    }
+    $("cardFields").innerHTML=h;
+    $("cardModal").classList.add("show");
+  }
+  function closeCardEdit(){ $("cardModal").classList.remove("show"); cardEdit=null; }
+  function saveCardEdit(){
+    if(!cardEdit) return;
+    var t=topicById(cardEdit.topicId); if(!t){ closeCardEdit(); return; }
+    var rows=rowsOf(t); if(!rows){ closeCardEdit(); return; }
+    var row=rows[cardEdit.rowIdx]; if(!row){ closeCardEdit(); return; }
+    Array.prototype.forEach.call(document.querySelectorAll("#cardFields .cm-in"), function(el){
+      var c=parseInt(el.getAttribute("data-c"),10); row[c]=el.value;
+    });
+    touchRows(t); save(); closeCardEdit(); renderHome();
+  }
+  function deleteCardRow(){
+    if(!cardEdit) return;
+    var t=topicById(cardEdit.topicId); if(!t){ closeCardEdit(); return; }
+    var rows=rowsOf(t); if(!rows){ closeCardEdit(); return; }
+    if(cardEdit.rowIdx>0 && cardEdit.rowIdx<rows.length){ rows.splice(cardEdit.rowIdx,1); touchRows(t); save(); }
+    closeCardEdit(); renderHome();
+  }
 
   /* ---------- helpers ---------- */
   var $ = function(id){ return document.getElementById(id); };
@@ -1692,11 +1749,17 @@
     if(/不使用|停用|暂不|暫不|冻结|凍結/.test(v)) return "st-off";
     return "st-none";
   }
-  function renderCards(rows, filter){
+  function renderCards(rows, filter, editable){
     if(!rows || !rows.length) return '<div class="sheet-empty">沒有資料</div>';
     var head=rows[0]||[], q=(filter||"").trim().toLowerCase();
-    var data=rows.slice(1).filter(function(r){ return r.some(function(c){ return String(c==null?"":c).trim()!==""; }); });
-    if(q) data=data.filter(function(r){ return r.some(function(c){ return String(c==null?"":c).toLowerCase().indexOf(q)>-1; }); });
+    var data=[];
+    for(var _ri=1;_ri<rows.length;_ri++){
+      var _r=rows[_ri];
+      var _ne=_r.some(function(c){ return String(c==null?"":c).trim()!==""; });
+      if(!_ne && !editable) continue;
+      if(q && !_r.some(function(c){ return String(c==null?"":c).toLowerCase().indexOf(q)>-1; })) continue;
+      data.push({ri:_ri, row:_r});
+    }
     function findCol(re){ for(var i=0;i<head.length;i++){ if(re.test(String(head[i]||""))) return i; } return -1; }
     var cMerchant=findCol(/商户名|^名称$|^名稱$/), cStatus=findCol(/對接狀況|对接状况|使用状况|使用狀況/),
         cAgent=findCol(/^代理$|归属|歸屬/), cPlane=findCol(/飞机名称|飛機名稱/),
@@ -1704,7 +1767,8 @@
     function baseUsed(){ var u={}; [cMerchant,cStatus,cAgent,cPlane].forEach(function(i){ if(i>-1) u[i]=true; }); return u; }
     var h='<div class="card-grid">';
     if(!data.length) h+='<div class="sheet-empty">沒有符合的資料</div>';
-    data.forEach(function(r){
+    data.forEach(function(o){
+      var r=o.row, ri=o.ri;
       var mer=cMerchant>-1?String(r[cMerchant]||"").trim():"";
       var pln=cPlane>-1?String(r[cPlane]||"").trim():"";
       var title=mer||pln||"（未命名）";
@@ -1716,7 +1780,9 @@
       var used=baseUsed();
       h+='<div class="rcard'+(/不使用|停用|暂不|暫不/.test(st+ag)?" dim":"")+'">';
       h+='<div class="rc-head"><div class="rc-title">'+esc(title)+'</div>'
-       + (st?'<span class="rc-st '+statusClass(st)+'">'+esc(st)+'</span>':'')+'</div>';
+       + (st?'<span class="rc-st '+statusClass(st)+'">'+esc(st)+'</span>':'')
+       + (editable?'<button type="button" class="card-edit-btn" data-r="'+ri+'" title="編輯這張">✏️</button>':'')
+       + '</div>';
       if(ag||pln) h+='<div class="rc-sub">'+(ag?'<span class="rc-chip">🏷 '+esc(ag)+'</span>':'')
                    + (pln&&mer?'<span class="rc-chip">✈️ '+esc(pln)+'</span>':'')+'</div>';
       CARD_GROUPS.forEach(function(g){
@@ -2219,9 +2285,12 @@
        + (fval?'<button class="ss-clear" id="sheetFilterClear" title="清除">✕</button>':'')
        + '</div>';
       var __useCard = (t.sections && t.sections.length && t.view!=="table");
-      h+='<div id="sheetTableWrap">'+(__useCard?renderCards(__rows, fval):renderTable(__rows, fval))+'</div>';
+      h+='<div id="sheetTableWrap">'+(__useCard?renderCards(__rows, fval, !t.locked):renderTable(__rows, fval))+'</div>';
       if((t.name===NOTES_NAME || t.name===IMPORTANT_NAME || t.name===QA_NAME || t.name===GUIZHANG_NAME || t.name===THREE_NAME) && !t.locked && !__useCard){
         h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="notesAddRow">＋ 新增一筆</button></div>';
+      }
+      if(t.sections && t.sections.length && !t.locked && __useCard){
+        h+='<div class="notes-add-bar"><button class="mini-btn notes-add" id="cardAddRow">＋ 新增一筆</button></div>';
       }
     }
     if(linked){
@@ -2256,6 +2325,17 @@
     });
     Array.prototype.forEach.call(document.querySelectorAll(".vw"), function(b){
       b.addEventListener("click", function(){ t.view=b.getAttribute("data-vw"); save(); renderSheetBlock(t); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".card-edit-btn"), function(b){
+      b.addEventListener("click", function(){ openCardEdit(t, parseInt(b.getAttribute("data-r"),10)); });
+    });
+    var car=$("cardAddRow");
+    if(car) car.addEventListener("click", function(){
+      var arows=rowsOf(t); if(!arows) return;
+      var ncol=(arows[0]||[]).length||1;
+      var nr=[]; for(var i=0;i<ncol;i++) nr.push("");
+      arows.push(nr); touchRows(t); save();
+      openCardEdit(t, arows.length-1);
     });
     Array.prototype.forEach.call(document.querySelectorAll(".qa-tab"), function(b){
       if(b.hasAttribute("data-sec")){
@@ -2843,6 +2923,10 @@
   $("topicCancel").addEventListener("click", closeTopicModal);
   $("topicSave").addEventListener("click", saveTopic);
   $("delTopicBtn").addEventListener("click", delTopic);
+  $("cardCancel").addEventListener("click", closeCardEdit);
+  $("cardSaveBtn").addEventListener("click", saveCardEdit);
+  $("cardDelBtn").addEventListener("click", deleteCardRow);
+  $("cardModal").addEventListener("click", function(e){ if(e.target===this) closeCardEdit(); });
   $("topicInput").addEventListener("keydown", function(e){ if(e.key==="Enter") saveTopic(); });
   $("iconInput").addEventListener("input", function(){
     if($("iconInput").value.trim()){ modalIcon=""; markIcon(); }
