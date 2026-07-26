@@ -628,6 +628,52 @@
     .wrap{padding:16px 8px 70px}
     .bm{max-width:150px}
   }
+
+  /* ---- 功能導覽（可螢幕錄影成介紹影片）---- */
+  .tour-ov{position:fixed;inset:0;z-index:9998;background:transparent;pointer-events:auto}
+  .tour-spot{position:fixed;z-index:9999;border-radius:18px;pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(38,26,22,.14), 0 0 0 3px rgba(255,140,122,.95), 0 0 26px 6px rgba(255,140,122,.65);
+    border:3px solid #ff8c7a;
+    transition:top .55s cubic-bezier(.22,1,.36,1),left .55s cubic-bezier(.22,1,.36,1),
+               width .55s cubic-bezier(.22,1,.36,1),height .55s cubic-bezier(.22,1,.36,1),opacity .3s}
+  .tour-cap{position:fixed;left:50%;bottom:108px;transform:translateX(-50%) translateY(8px);
+    z-index:10001;max-width:min(820px,92vw);background:rgba(38,26,22,.95);color:#fff5f0;
+    font-size:clamp(19px,2.6vw,27px);line-height:1.55;font-weight:600;padding:16px 30px;border-radius:18px;
+    box-shadow:0 12px 34px rgba(0,0,0,.42);text-align:center;pointer-events:none;
+    opacity:0;transition:opacity .3s,transform .3s}
+  .tour-cap.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .tour-cap b{color:#ffb9a8}
+  .tour-ctrl{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);z-index:10001;
+    display:flex;gap:8px;align-items:center}
+  .tour-ctrl button{font:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:999px;border:0;
+    background:#fff;color:#5b4a44;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .tour-ctrl button.pri{background:var(--accent);color:#fff}
+  .tour-pill{font-size:12px;font-weight:700;color:#fff5f0;background:rgba(38,26,22,.85);
+    padding:8px 13px;border-radius:999px;letter-spacing:.5px}
+  .tour-title{position:fixed;left:50%;top:26px;transform:translateX(-50%);z-index:10001;
+    color:#fff;font-size:15px;font-weight:800;letter-spacing:3px;
+    background:rgba(38,26,22,.8);padding:8px 20px;border-radius:999px;opacity:0;transition:opacity .4s}
+  .tour-title.on{opacity:1}
+  .tour-unlock{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:10002;
+    background:var(--accent);color:#fff;font-size:13px;font-weight:800;padding:9px 17px;border-radius:999px;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer;animation:tpulse 1.3s ease-in-out infinite}
+  @keyframes tpulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
+  body.tour-on #memoNote,body.tour-on #memoShow{display:none !important}
+
+  .search-sheet{max-width:640px;width:min(640px,94vw);max-height:82vh;display:flex;flex-direction:column}
+  .search-head{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .search-head input{flex:1;font:inherit;font-size:16px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+  .search-head input:focus{outline:none;border-color:var(--accent)}
+  .gs-results{overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
+  .gs-group{margin-bottom:12px}
+  .gs-gt{font-size:12px;font-weight:800;color:var(--ink-soft);letter-spacing:1px;padding:4px 2px;position:sticky;top:0;background:var(--card)}
+  .gs-item{display:flex;gap:8px;align-items:center;padding:9px 11px;border-radius:11px;cursor:pointer;border:1px solid transparent;transition:.1s}
+  .gs-item:hover{background:var(--accent-soft);border-color:var(--line)}
+  .gs-ic{font-size:16px;flex:0 0 auto}
+  .gs-txt{flex:1;min-width:0;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gs-txt mark{background:#ffe08a;color:#7a5a10;border-radius:3px;padding:0 2px}
+  .gs-sec{font-size:11px;color:var(--ink-soft);flex:0 0 auto}
+  .gs-empty{color:var(--ink-soft);text-align:center;padding:26px;font-size:14px}
 </style>
 </head>
 <body>
@@ -668,6 +714,7 @@
         <p>什麼資料都吃，重點自動吐出來</p>
       </div>
       <div class="spacer"></div>
+      <button class="ghost-btn" id="tourBtn" title="功能導覽" style="padding:6px 10px;font-size:16px">🎬</button>
       <button class="ghost-btn" id="themeBtn" title="換主題色" style="padding:6px 10px;font-size:16px">🎨</button>
       <button class="ghost-btn" id="calcBtn" title="小計算機" style="padding:6px 10px;line-height:0">
         <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" aria-label="計算機">
@@ -688,6 +735,7 @@
           <rect x="16.8" y="13.1" width="2.2" height="6.1" rx="0.7" fill="#f5a623"/>
         </svg>
       </button>
+      <button class="ghost-btn" id="searchBtn" title="全站搜尋">🔎</button>
       <button class="ghost-btn" id="exportBtn">匯出</button>
       <button class="ghost-btn" id="importBtn">匯入</button>
     </header>
@@ -748,6 +796,16 @@
 </div>
 
 <!-- ===== TOPIC MODAL (新增 / 編輯主題) ===== -->
+<div class="overlay" id="searchModal">
+  <div class="sheet search-sheet">
+    <div class="search-head">
+      <span class="ss-ic" style="font-size:18px">🔎</span>
+      <input id="gsInput" type="text" placeholder="搜尋所有書籤（商户、费率、备注…）" autocomplete="off">
+      <button class="ghost-btn" id="gsClose">關閉</button>
+    </div>
+    <div id="gsResults" class="gs-results"></div>
+  </div>
+</div>
 <div class="overlay" id="cardModal">
   <div class="sheet">
     <h3 id="cardModalTitle">編輯</h3>
@@ -1281,6 +1339,79 @@
     return t.sheetCache ? t.sheetCache.rows : null;
   }
   function touchRows(t){ if(t && t.sheetCache) t.sheetCache.seed=false; }
+
+  /* ---------- 全站搜尋 ---------- */
+  function gsHi(text,q){
+    var t=esc(text), lo=text.toLowerCase(), ql=q.toLowerCase(), i=lo.indexOf(ql);
+    if(i<0) return t;
+    // 在原字串上找位置，重新用 esc 包裝（簡單作法：整段 esc 後對 q 做不分大小寫替換）
+    try{
+      var re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig");
+      return esc(text).replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig"), function(m){ return "<mark>"+m+"</mark>"; });
+    }catch(e){ return t; }
+  }
+  function runGlobalSearch(q){
+    q=(q||"").trim(); var out=[]; if(!q) return out;
+    var ql=q.toLowerCase();
+    state.topics.forEach(function(t){
+      var blocks=[];
+      if(t.sections && t.sections.length) t.sections.forEach(function(sec,si){ blocks.push({rows:sec.rows,secIdx:si,secName:sec.name}); });
+      else if(t.sheetCache && t.sheetCache.rows) blocks.push({rows:t.sheetCache.rows,secIdx:null,secName:null});
+      blocks.forEach(function(bl){
+        var rows=bl.rows||[];
+        for(var r=1;r<rows.length && out.length<80;r++){
+          var row=rows[r]; if(!row) continue; var hit="";
+          for(var c=0;c<row.length;c++){ var v=String(row[c]==null?"":row[c]); if(v.toLowerCase().indexOf(ql)>-1){ hit=v; break; } }
+          if(hit){
+            var label=row.filter(function(x){return String(x||"").trim()!=="";}).slice(0,3).join(" · ");
+            out.push({tid:t.id,tname:t.name,ticon:t.icon,secIdx:bl.secIdx,secName:bl.secName,snippet:label||hit});
+          }
+        }
+      });
+      (t.items||[]).forEach(function(it){
+        var txt=String(it.text!=null?it.text:(it.txt!=null?it.txt:""));
+        if(txt.toLowerCase().indexOf(ql)>-1 && out.length<80) out.push({tid:t.id,tname:t.name,ticon:t.icon,snippet:txt});
+      });
+      if(t.anno) Object.keys(t.anno).forEach(function(k){ var v=String(t.anno[k]||""); if(v.toLowerCase().indexOf(ql)>-1 && out.length<80) out.push({tid:t.id,tname:t.name,ticon:t.icon,snippet:"📝 "+v}); });
+    });
+    return out;
+  }
+  function renderSearch(q){
+    var box=$("gsResults"); if(!box) return;
+    if(!q.trim()){ box.innerHTML='<div class="gs-empty">輸入關鍵字，搜尋所有書籤的內容</div>'; return; }
+    var res=runGlobalSearch(q);
+    if(!res.length){ box.innerHTML='<div class="gs-empty">找不到「'+esc(q)+'」</div>'; return; }
+    var groups={}, order=[];
+    res.forEach(function(x){ var key=x.tid+"|"+(x.secName||""); if(!groups[key]){ groups[key]=[]; order.push(key); } groups[key].push(x); });
+    var h="";
+    order.forEach(function(key){
+      var g=groups[key], f=g[0];
+      h+='<div class="gs-group"><div class="gs-gt">'+esc(f.ticon||"")+' '+esc(f.tname)+(f.secName?' · '+esc(f.secName):'')+'（'+g.length+'）</div>';
+      g.forEach(function(x){
+        h+='<div class="gs-item" data-tid="'+esc(x.tid)+'" data-sec="'+(x.secIdx==null?"":x.secIdx)+'" data-q="'+esc(q)+'">'
+         + '<span class="gs-ic">'+esc(x.ticon||"📄")+'</span>'
+         + '<span class="gs-txt">'+gsHi(x.snippet,q)+'</span></div>';
+      });
+      h+='</div>';
+    });
+    box.innerHTML=h;
+    Array.prototype.forEach.call(box.querySelectorAll(".gs-item"), function(el){
+      el.addEventListener("click", function(){
+        gsJump(el.getAttribute("data-tid"), el.getAttribute("data-sec"), el.getAttribute("data-q"));
+      });
+    });
+  }
+  function gsJump(tid, sec, q){
+    var t=topicById(tid); if(!t) return;
+    curTopic=tid;
+    if(t.sections && t.sections.length && sec!=="") t.secIdx=parseInt(sec,10)||0;
+    sheetFilters[t.id]=q;
+    try{ localStorage.setItem(LASTKEY, tid); }catch(e){}
+    closeSearch(); renderHome();
+    setTimeout(function(){ var el=$("sheetTableWrap"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }, 120);
+  }
+  function openSearch(){ $("searchModal").classList.add("show"); var i=$("gsInput"); i.value=""; renderSearch(""); setTimeout(function(){ i.focus(); },50); }
+  function closeSearch(){ $("searchModal").classList.remove("show"); }
   var cardEdit=null; // { topicId, rowIdx }
   var CARD_LONG_EDIT=/规则|規則|冻结|風控|风控|對接记录|对接记录|创群时间|说明|說明|费率|費率|回U/;
   function openCardEdit(t, rowIdx){
@@ -2155,7 +2286,9 @@
       if(rows[r]){ while(rows[r].length<=c) rows[r].push(""); rows[r][c]=next; }
       t.sheetCache.seed=false;
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
-      renderHome();
+      var yes=(next==="✓");
+      tg.textContent=next;
+      tg.classList.remove("st-none"); tg.classList.toggle("st-yes",yes); tg.classList.toggle("st-no",!yes);
       return;
     }
     var cp=e.target.closest ? e.target.closest(".copy-btn") : null;
@@ -2179,12 +2312,18 @@
     var ab=e.target.closest ? e.target.closest(".anno-btn") : null;
     if(ab){
       e.stopPropagation();
-      annoEditing=String(ab.getAttribute("data-r"));
-      renderHome();
-      setTimeout(function(){
-        var inp=document.querySelector('.anno-edit[data-r="'+annoEditing+'"]');
-        if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
-      }, 30);
+      var acell=ab.closest ? ab.closest("td") : null;
+      if(!acell || acell.querySelector(".anno-edit")) return;
+      var ar=ab.getAttribute("data-r");
+      var t2=topicById(curTopic), amap=(t2&&t2.anno)||{};
+      var av=amap[ar]||"";
+      annoEditing=String(ar);
+      acell.classList.add("editing");
+      var ta=document.createElement("textarea");
+      ta.className="anno-edit"; ta.setAttribute("data-r",ar); ta.rows=2;
+      ta.placeholder="輸入註解（可換行），點別處儲存"; ta.value=av;
+      acell.appendChild(ta);
+      ta.focus(); ta.setSelectionRange(av.length, av.length);
     }
   }
   function commitAnno(input){
@@ -2195,7 +2334,19 @@
     if(t.sheetCache) t.sheetCache.seed=false;
     annoEditing=null;
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(err){}
-    renderHome();
+    // 就地更新：移除 textarea、更新按鈕/圓點，不整頁重繪
+    var cell=input.closest ? input.closest("td") : null;
+    if(input.parentNode) input.parentNode.removeChild(input);
+    if(cell){
+      cell.classList.remove("editing");
+      var btn=cell.querySelector(".anno-btn");
+      if(btn){
+        if(v){ btn.classList.add("has"); btn.textContent=""; btn.removeAttribute("title"); }
+        else { btn.classList.remove("has"); btn.textContent="📝"; btn.setAttribute("title","加註解"); }
+      }
+      var dot=cell.querySelector(".anno-dot");
+      if(!dot && v && !btn){ /* 唯讀圓點模式：需要時再建立 */ }
+    }
   }
   function clockStr(ts){
     var d=new Date(ts), p=function(n){return(n<10?"0":"")+n;};
@@ -2376,7 +2527,7 @@
       wrapC.addEventListener("change", onCellChange);
       wrapC.addEventListener("keydown", function(e){
         if(e.target && e.target.classList && e.target.classList.contains("anno-edit")){
-          if(e.key==="Escape"){ annoEditing=null; renderHome(); }
+          if(e.key==="Escape"){ annoEditing=null; var _c=e.target.closest?e.target.closest("td"):null; if(e.target.parentNode) e.target.parentNode.removeChild(e.target); if(_c) _c.classList.remove("editing"); }
         }
       });
       wrapC.addEventListener("focusout", function(e){
@@ -2923,6 +3074,11 @@
   $("topicCancel").addEventListener("click", closeTopicModal);
   $("topicSave").addEventListener("click", saveTopic);
   $("delTopicBtn").addEventListener("click", delTopic);
+  $("searchBtn").addEventListener("click", openSearch);
+  $("gsClose").addEventListener("click", closeSearch);
+  $("gsInput").addEventListener("input", function(){ renderSearch(this.value); });
+  $("gsInput").addEventListener("keydown", function(e){ if(e.key==="Escape") closeSearch(); });
+  $("searchModal").addEventListener("click", function(e){ if(e.target===this) closeSearch(); });
   $("cardCancel").addEventListener("click", closeCardEdit);
   $("cardSaveBtn").addEventListener("click", saveCardEdit);
   $("cardDelBtn").addEventListener("click", deleteCardRow);
@@ -3030,7 +3186,187 @@
     }
   });
 
+
+  /* ---------- 功能導覽（可螢幕錄影成介紹影片） ---------- */
+  (function(){
+    var btn=$("tourBtn"); if(!btn) return;
+    var STEPS=[
+      {tab:null,     sel:"header",            cap:"頭腦備份站 — 金流資料，隨身備份、隨時查。",                 dur:3400},
+      {tab:null,     sel:"#topicGrid",        cap:"所有分類都在這排書籤，按住還能拖曳排順序。",               dur:3600},
+      {tab:"加减",   sel:".sheet-block",      cap:"加减：內外部三方金額分區顯示，自動千分位，點一下就複製。", dur:4400},
+      {tab:"开关",   sel:".sheet-block",      cap:"开关：通道狀態用下拉快速切換，還能標色、加註解。",         dur:4200},
+      {tab:"备注",   sel:".sheet-block",      cap:"备注：常用加扣款範例一鍵複製，加款綠、扣款紅。",           dur:4200},
+      {tab:"重要",   sel:".sheet-block",      cap:"重要：各商户規則，说明欄有內容自動標上警示。",             dur:4000},
+      {tab:"Q&A",    sel:".qa-tabs",          cap:"Q&A：出货、进货、特殊一鍵切換分類。",                       dur:3600, act:"qa"},
+      {tab:null,     sel:".sheet-block",      cap:"選了分類就只看那一類的問答，找答案很快。",                 dur:3600},
+      {tab:"规章",   sel:".qa-tabs",          cap:"规章：网银、支付宝、纯代付三個分頁。",                     dur:3600},
+      {tab:null,     sel:".rcard",            cap:"欄位太多？改成卡片式，費率、金額、帳號分組整理。",         dur:4200},
+      {tab:null,     sel:"#cardModal .sheet", cap:"解鎖後點鉛筆，開表單就能直接編輯，欄位一次填好。",  dur:4200, need:"unlock", act:"openedit"},
+      {tab:"三方",   sel:".rcard",            cap:"三方：第三方通道總整理，長長的規則也看得清楚。",           dur:4200},
+      {tab:null,     sel:"#sheetLock",        cap:"所有內容打開時預設鎖定，避免誤改。",                       dur:3600},
+      {tab:null,     sel:"#calcPanel",        cap:"右上角有浮動計算機，隨時算金額，還能一筆一筆記下來自動加總。", dur:4600, act:"opencalc"},
+      {tab:null,     sel:"#themeBtn",         cap:"旁邊的調色盤，一鍵換背景主題，粉紅、薄荷、奶茶、天藍，隨你切換。", dur:4800, act:"theme"},
+      {tab:null,     sel:"#exportBtn",        cap:"全部離線，資料在你手上，隨時匯出備份。",                   dur:3600},
+      {tab:null,     sel:"header",            cap:"頭腦備份站，開始用吧！",                                   dur:3000}
+    ];
+    var ov,spot,cap,ctrl,pill,titleEl,pauseBtn,idx=0,timer=null,paused=false,running=false,curSel=null;
+    var voices=[],chosen=null,von=true,token=0;
+
+    function loadVoices(){
+      var vs=(("speechSynthesis" in window)?speechSynthesis.getVoices():[])||[];
+      var tw=vs.filter(function(v){ return /zh[-_]?(TW|Hant)/i.test(v.lang)||/臺灣|台灣|國語/.test(v.name); });
+      voices=tw.length?tw:vs.filter(function(v){ return /^zh/i.test(v.lang); });
+      var prefs=["hsiaochen","yating","hsiaoyu","google 國語","google 中文","meijia","美佳","hanhan","google"];
+      voices.sort(function(a,b){
+        var ra=prefs.findIndex(function(p){return a.name.toLowerCase().indexOf(p)>-1;});
+        var rb=prefs.findIndex(function(p){return b.name.toLowerCase().indexOf(p)>-1;});
+        return (ra<0?99:ra)-(rb<0?99:rb);
+      });
+      chosen=voices[0]||null;
+    }
+    if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+    function speak(t){
+      if(!von || !("speechSynthesis" in window)) return;
+      try{
+        speechSynthesis.cancel();
+        if(!chosen) loadVoices();
+        var u=new SpeechSynthesisUtterance(t);
+        if(chosen) u.voice=chosen;
+        u.lang=(chosen&&chosen.lang)||"zh-TW"; u.rate=1.06; u.pitch=1; u.volume=1;
+        setTimeout(function(){ try{ speechSynthesis.speak(u); }catch(e){} },70);
+      }catch(e){}
+    }
+    function clickTab(name){
+      var bs=document.querySelectorAll("#topicGrid .bm");
+      for(var i=0;i<bs.length;i++){
+        var l=bs[i].querySelector(".lbl");
+        if(l && l.textContent.trim()===name){ bs[i].click(); return true; }
+      }
+      return false;
+    }
+    function position(sel){
+      curSel=sel;
+      var el=sel?document.querySelector(sel):null;
+      if(!el || !spot){ if(spot) spot.style.opacity="0"; return; }
+      var r=el.getBoundingClientRect();
+      var pad=8, maxH=Math.min(r.height, window.innerHeight-260);
+      spot.style.opacity="1";
+      spot.style.left=Math.max(6,r.left-pad)+"px";
+      spot.style.top=Math.max(6,r.top-pad)+"px";
+      spot.style.width=Math.min(window.innerWidth-12, r.width+pad*2)+"px";
+      spot.style.height=Math.max(30,maxH+pad*2)+"px";
+    }
+    function scrollIntoView(sel){
+      var el=sel?document.querySelector(sel):null; if(!el) return;
+      var r=el.getBoundingClientRect();
+      var target=window.scrollY + r.top - 110;
+      if(r.height > window.innerHeight-280) target=window.scrollY + r.top - 90;
+      window.scrollTo({top:Math.max(0,target),behavior:"smooth"});
+    }
+    function reposition(){ if(running) position(curSel); }
+    function showStep(i){
+      idx=(i+STEPS.length)%STEPS.length;
+      var s=STEPS[idx], my=++token;
+      if(s.act!=="openedit"){ var _cm=document.getElementById("cardModal"); if(_cm && _cm.classList.contains("show")){ var _cc=document.getElementById("cardCancel"); if(_cc) _cc.click(); } }
+      if(s.act!=="opencalc"){ var _cp=document.getElementById("calcPanel"); if(_cp && !_cp.classList.contains("hidden")){ var _x=document.getElementById("calcClose"); if(_x) _x.click(); } }
+      if(s.tab) clickTab(s.tab);
+      if(s.need==="unlock"){
+        var t=topicById(curTopic);
+        if(t && t.locked){ t.locked=false; save(); renderHome(); }
+      }
+      if(s.act==="opencalc"){
+        var _cb=document.getElementById("calcBtn"); if(_cb) _cb.click();
+        setTimeout(function(){ if(my===token) position("#calcPanel"); }, 220);
+      }
+      if(s.act==="theme"){
+        var _tb=document.getElementById("themeBtn");
+        if(_tb){ setTimeout(function(){ if(my===token) _tb.click(); },900);
+                 setTimeout(function(){ if(my===token) _tb.click(); },2100);
+                 setTimeout(function(){ if(my===token) _tb.click(); },3300); }
+      }
+      if(s.act==="openedit"){
+        setTimeout(function(){ if(my!==token) return; var e=document.querySelector(".card-edit-btn"); if(e){ e.click(); setTimeout(function(){ if(my===token) position("#cardModal .sheet"); },380); } }, 500);
+      }
+      if(s.act==="qa"){
+        setTimeout(function(){ var b=document.querySelector('.qa-tab[data-qa="出货"]'); if(b) b.click(); }, 1200);
+      }
+      cap.classList.remove("on");
+      pill.textContent=(idx+1)+" / "+STEPS.length;
+      setTimeout(function(){
+        if(my!==token) return;
+        scrollIntoView(s.sel);
+        setTimeout(function(){
+          if(my!==token) return;
+          position(s.sel);
+          cap.innerHTML=s.cap;
+          cap.classList.add("on");
+          speak(s.cap.replace(/<[^>]+>/g,""));
+        }, 280);
+      }, s.tab?180:60);
+      clearTimeout(timer);
+      var _d=(window.__TOUR_DURS && window.__TOUR_DURS[idx]) || s.dur;
+      if(!paused) timer=setTimeout(function(){ if(my===token) showStep(idx+1); }, _d);
+    }
+    function start(){
+      if(running) return; running=true; paused=false; idx=0;
+      document.body.classList.add("tour-on");
+      ov=document.createElement("div"); ov.className="tour-ov";
+      spot=document.createElement("div"); spot.className="tour-spot"; spot.style.opacity="0";
+      titleEl=document.createElement("div"); titleEl.className="tour-title"; titleEl.textContent="功能導覽";
+      cap=document.createElement("div"); cap.className="tour-cap";
+      ctrl=document.createElement("div"); ctrl.className="tour-ctrl";
+      pill=document.createElement("span"); pill.className="tour-pill";
+      var prev=document.createElement("button"); prev.textContent="‹ 上一步";
+      pauseBtn=document.createElement("button"); pauseBtn.className="pri"; pauseBtn.textContent="⏸ 暫停";
+      var nextB=document.createElement("button"); nextB.textContent="下一步 ›";
+      var endB=document.createElement("button"); endB.textContent="✕ 結束";
+      ctrl.appendChild(pill); ctrl.appendChild(prev); ctrl.appendChild(pauseBtn);
+      ctrl.appendChild(nextB); ctrl.appendChild(endB);
+      document.body.appendChild(ov); document.body.appendChild(spot);
+      document.body.appendChild(titleEl); document.body.appendChild(cap); document.body.appendChild(ctrl);
+      setTimeout(function(){ titleEl.classList.add("on"); },200);
+      prev.onclick=function(e){ e.stopPropagation(); showStep(idx-1); };
+      nextB.onclick=function(e){ e.stopPropagation(); showStep(idx+1); };
+      endB.onclick=function(e){ e.stopPropagation(); stop(); };
+      pauseBtn.onclick=function(e){
+        e.stopPropagation(); paused=!paused;
+        pauseBtn.textContent=paused?"▶ 繼續":"⏸ 暫停";
+        if(paused){ clearTimeout(timer); if("speechSynthesis" in window) speechSynthesis.cancel(); }
+        else showStep(idx);
+      };
+      if("speechSynthesis" in window){
+        var un=document.createElement("div"); un.className="tour-unlock";
+        un.textContent="🔊 點一下畫面開啟語音旁白";
+        document.body.appendChild(un);
+        var kick=function(){
+          un.remove();
+          document.removeEventListener("click",kick,true);
+          document.removeEventListener("touchstart",kick,true);
+          speak(STEPS[idx].cap.replace(/<[^>]+>/g,""));
+        };
+        document.addEventListener("click",kick,true);
+        document.addEventListener("touchstart",kick,true);
+        setTimeout(function(){ if(un.parentNode) un.remove(); }, 9000);
+      }
+      window.addEventListener("resize",reposition);
+      btn.style.display="none";
+      showStep(0);
+    }
+    function stop(){
+      running=false; clearTimeout(timer); token++;
+      if("speechSynthesis" in window) speechSynthesis.cancel();
+      [ov,spot,cap,ctrl,titleEl].forEach(function(el){ if(el&&el.parentNode) el.remove(); });
+      document.querySelectorAll(".tour-unlock").forEach(function(u){ u.remove(); });
+      window.removeEventListener("resize",reposition);
+      document.body.classList.remove("tour-on");
+      btn.style.display="";
+    }
+    btn.addEventListener("click", start);
+    window.__startTour=start;   // 供錄影用
+  })();
+
 })();
+
 </script>
 </body>
 </html>
