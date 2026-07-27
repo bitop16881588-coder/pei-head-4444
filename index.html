@@ -299,7 +299,10 @@
   .ad-chip{display:inline-block;padding:2px 11px;border-radius:999px;font-weight:700;font-size:13px}
   .ad-add{background:#dcefe0;color:#2f8a52}
   .ad-sub{background:#fbe1e1;color:#cf5b5b}
-  td.del-c{padding:4px 6px;background:#fffaf6}
+  td.del-c{padding:4px 6px;background:#fffaf6;white-space:nowrap}
+  .row-grip{cursor:grab;color:var(--ink-soft);font-size:14px;user-select:none;margin-right:2px}
+  tr.drag-row.dragging{opacity:.4;background:var(--accent-soft)}
+  tr.drag-row.drag-over td{border-top:2px solid var(--accent)}
   th.del-h{background:var(--accent-soft);width:34px}
   .row-del{border:none;background:transparent;color:#d99;font-size:14px;cursor:pointer;
     width:24px;height:24px;border-radius:8px;line-height:1}
@@ -674,6 +677,31 @@
   .gs-txt mark{background:#ffe08a;color:#7a5a10;border-radius:3px;padding:0 2px}
   .gs-sec{font-size:11px;color:var(--ink-soft);flex:0 0 auto}
   .gs-empty{color:var(--ink-soft);text-align:center;padding:26px;font-size:14px}
+  /* 三方明細帳 */
+  .ledger-link{border:1.5px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-weight:700;
+    font-size:14px;padding:6px 10px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.12s}
+  .ledger-link:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .lg-badge{background:var(--accent);color:#fff;font-size:11px;font-weight:800;min-width:20px;text-align:center;
+    padding:1px 6px;border-radius:999px}
+  .ledger-sheet{max-width:720px;width:min(720px,96vw);max-height:86vh;display:flex;flex-direction:column}
+  .lg-sum{font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .lg-sum b{color:var(--accent);font-size:15px}
+  .lg-wrap{overflow:auto;flex:1;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+  .lg-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+  .lg-table th{position:sticky;top:0;background:var(--accent-soft);padding:9px 8px;font-weight:800;text-align:left;z-index:1;white-space:nowrap}
+  .lg-table td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:middle}
+  .lg-h-grip,.lg-h-del{width:34px}.lg-h-amt{text-align:right}
+  .lg-table input{width:100%;border:1px solid transparent;background:transparent;font:inherit;font-size:13.5px;
+    padding:6px 7px;border-radius:8px;color:var(--ink)}
+  .lg-table input:focus{outline:none;border-color:var(--accent);background:#fff}
+  .lg-amt input{text-align:right;font-variant-numeric:tabular-nums}
+  .lg-grip{cursor:grab;color:var(--ink-soft);text-align:center;font-size:15px;user-select:none;touch-action:none}
+  .lg-row.dragging{opacity:.4;background:var(--accent-soft)}
+  .lg-row.drag-over td{border-top:2px solid var(--accent)}
+  .lg-del{border:none;background:transparent;color:#c0492f;cursor:pointer;font-size:14px;width:26px;height:26px;border-radius:7px}
+  .lg-del:hover{background:#fbe1e1}
+  .lg-actions{display:flex;justify-content:flex-start}
+  .lg-empty td{text-align:center;color:var(--ink-soft);padding:20px}
 </style>
 </head>
 <body>
@@ -796,6 +824,23 @@
 </div>
 
 <!-- ===== TOPIC MODAL (新增 / 編輯主題) ===== -->
+<div class="overlay" id="ledgerModal">
+  <div class="sheet ledger-sheet">
+    <div class="search-head">
+      <span style="font-size:18px">🧾</span>
+      <div style="flex:1"><div id="lgTitle" style="font-weight:800;font-size:16px"></div>
+        <div id="lgSum" class="lg-sum"></div></div>
+      <button class="ghost-btn" id="lgClose">關閉</button>
+    </div>
+    <div class="lg-wrap">
+      <table class="lg-table">
+        <thead><tr><th class="lg-h-grip"></th><th>日期</th><th>商户</th><th>单号</th><th class="lg-h-amt">金额</th><th class="lg-h-del"></th></tr></thead>
+        <tbody id="lgBody"></tbody>
+      </table>
+    </div>
+    <div class="lg-actions"><button class="mini-btn" id="lgAdd">＋ 新增一筆</button></div>
+  </div>
+</div>
 <div class="overlay" id="searchModal">
   <div class="sheet search-sheet">
     <div class="search-head">
@@ -1222,6 +1267,7 @@
     ["26/3/28 已退押停用", "中联支付-卡密", "", "", "", "0.045", "欧易支付宝购买第三档上浮0.12", "", "1.日切时间：24H / 2.三方费率4.5 / 3.固定充值金额：10.20.30.50.100.200 / 4.回u有无限制：C2C 支付宝第三档+0.12 / 5.注意事项：小额没事，没司法，抗投诉的", "", ""],
     ["26/4/8 以退押提用", "红喜鹊支付转卡", "", "30000.0", "", "0.036", "歐易普通支付寶購買（C2C）第三檔上浮0.13", "", "通道规则：抗投! 只接正規博彩，查單24小時內有效, ,禁三黑,殺豬,資金盤,發現大頭照不退不補設置延時不退不補,支付時間300秒,如出現超時支付/企業歸集號入款資金/修改金額/重複支付/修改支付方式不退不補（重複支付，修改金額導致不到賬，會盡量配合追回！如追不回不補不退！！） / 🈲三黑、刷單、電閘、資金、大頭貼等一切黑料，普通司法凍結1:1賠付。司法已天眼爲準，司法費由商戶承擔，沒查出我方承擔。司法追訴期三個月。\"", "", ""]
   ];
+  var LEDGER_SEED={"内::JJ卡转卡": [["2024/08/27", "OL", "L20240827092432136846996", "111"], ["2024/09/03", "MT", "KRE_4303201", "110"], ["2024/12/15", "SH", "KRD_4280472", "1000"], ["2024/12/19", "OL1688", "L20241219163256695291387", "185"], ["2025/02/21", "YS1688", "KRF_2061014", "1000"]], "外::JJ卡转卡": [], "内::JJ支付宝": [["2025/04/20", "MT", "KRE_4897710", "362"], ["2025/04/25", "", "R0013357240", "400"], ["2025/04/29", "XO", "01968182BA715BF35D0C19E7982D1000", "123"], ["2025/05/01", "ND168NB", "KRI_1485891", "300"], ["ND", "2025/05/08", "KRI_1526013", "100"], ["2025/05/18", "ND168NB", "KRI_1602114", "230"], ["2025/05/21", "YS168NB", "KRF_2204481", "100"], ["2025/05/25", "XO168B", "0197088B76EC7971589504D0906A2FDE", "500"], ["2025/06/04", "JY168NB", "KRH_1135819", "100"], ["2025/06/07", "JY168B", "KRH_1141296", "300"], ["2025/06/17", "SH168B", "KRD_4607394", "110"], ["2025/06/17", "YS168NB", "KRF_2248914", "110"], ["2025/06/17", "ND168B", "KRI_1825971", "110"], ["2025/06/20", "XO168NB", "01978C541AB47CC9B5F60F159E98E84C", "268"], ["2025/06/29", "ND168NB", "KRI_1916746", "180"], ["2025/07/03", "XO168NB", "0197CDDAB2845BF3B827AD1C3EC62223", "150"], ["2025/07/03", "XO168NB", "0197CDE3D10141E1FFBFC08A2293CFB8", "117"], ["2025/07/08", "JY168B", "KRH_1191930", "120"], ["2025/07/12", "ND168B", "KRI_2011400", "110"], ["2025/07/16", "LS168NB", "L20250716164633558238190", "209"], ["2025/07/25", "ND168B", "KRI_2102749", "110"], ["2025/07/29", "JY168B", "KRH_1221059", "112"], ["2025/08/01", "MT168B", "KRE_5139876", "211"], ["2025/08/02", "FB168B", "KRA_2692290", "138"], ["2025/08/20", "HS168NB", "KRJ_548254", "389"], ["2025/08/29", "OL168B", "L20250829210620171878807", "124"], ["2025/09/03", "XY168NB", "L20250903113205185442114", "115"], ["2025/09/05", "ND168NB", "KRI_2461943", "300"], ["2025/09/25", "ND168NB", "KRI_2621429", "300"], ["2025/10/24", "OL168NB", "L20251024095743368814769", "233"], ["2025/11/10", "ND168NB", "KRI_2945498", "512"], ["2025/11/13", "HD168NB", "R0013420948", "500"], ["2025/11/25", "SH168B", "KRD_4866093", "854"], ["2025/12/08", "YD168NB", "KRK_161438", "225"], ["2025/12/12", "ND168NB", "KRI_3168804", "110"], ["2026/01/03", "ND168NB", "KRI_3334553", "1082"], ["2026/01/14", "ND168NB", "KRI_3403208", "120"], ["2026/01/19", "YS168B", "KRF_2666365", "207"], ["2026/02/26", "YS168NB", "KRF_2699596", "501"], ["2026/03/01", "XY168NB", "L20260301120941860899820", "206"], ["2026/03/04", "ND168NB", "KRI_3675456", "120"], ["2026/03/18", "HS168NB", "KRJ_1458054", "150"], ["2026/03/21", "XO168NB", "019D0FA3789E5BC451215CAF2A9501C1", "135"], ["2026/03/28", "XH168B", "L20260328212447400069753", "112"], ["2026/04/02", "LS168B", "L20260402133838991789760", "124"], ["2026/04/04", "OL168NB", "L20260404091348097135986", "213"], ["2026/04/07", "MT168B", "KRE_5627804", "115"], ["2026/04/15", "LS168NB", "L20260415183711949544882", "119"], ["2026/04/18", "MT168B", "KRE_5638638", "200"], ["2026/05/14", "JY168NB", "KRH_1572754", "110"], ["2026/05/17", "XY168NB", "L20260517183704062856469", "312"], ["2026/06/03", "HS168B", "KRJ_1706665", "200"], ["2026/06/03", "FB168NB", "KRA_2926753", "300"], ["2026/06/03", "FB168NB", "KRA_2926886", "500"], ["2026/06/30", "XY168NB", "L20260630121710124801627", "117"]], "外::JJ支付宝": [["1/20", "", "250120193525R004P03ca", "891"], ["1/20", "", "250120192459R004P0ed3", "1002"], ["1/21", "", "OTC045925012157044", "1001"], ["1/30", "", "250130172043R004P0b6a", "1009"], ["1/31", "", "250131131806R004P05ea", "1008"], ["1/31", "", "250131124119R004P02ad", "1008"], ["2/9", "", "250209234610R004P0808", "505"], ["3/26", "", "L20250326195249975319778", "165"], ["6/30", "sfpay1", "5063016314592851", "200"], ["12/03", "sfpay1", "5120318815289009", "400"]], "内::JJ微信": [["2025/08/03", "JD168E", "KRG_1612247", "199"], ["2025/10/17", "MT168E", "KRE_5315170", "200"]], "外::WF支付宝": [], "内::JJ数字人民币": [], "内::VCOTC支付宝": [["2025/04/28", "", "01967DAC78F119C501FCB3280FCB57BB", "320"], ["2025/06/05", "", "KRJ_208142", "305"], ["2025/06/25", "", "KRJ_301622", "700"], ["2025/07/24", "", "019839DA84FD4D437DF1202C23D4C481", "500"], ["2026/01/01", "", "KRK_261931", "800"], ["2026/02/14", "FB168B", "KRA_2870206", "300"]], "内::XQ小额卡卡": [["2025/12/10", "XY168G", "L20251210074456955132698", "680"], ["2026/01/10", "ND168G", "KRI_3379481", "887"], ["2026/01/24", "XY168G", "L20260124081029814658467", "701"], ["2026/03/30", "", "KRK_559550", "1000"]], "内::红喜鹊卡转卡": [], "内::红喜鹊支转支": [], "内::ZCPAY支付宝": [["2024/10/18", "KF", "L20241018021103883507575", "500"], ["2024/11/07", "YS1688A", "KRF_1854777", "677"], ["2024/12/03", "ND", "KRI_525287", "510"], ["2024/12/11", "ND1688A", "KRI_568204", "500"]], "外::ZCPAY支付宝": [], "内::码上支付宝（新人层）": [["2025/06/21", "HS168NB", "KRJ_280156", "2000"], ["2025/08/20", "HS168NB", "KRJ_548593", "623"], ["2025/09/01", "HS168NB", "KRJ_601871", "500"], ["2025/11/24", "YD168NB", "KRK_112628", "500"], ["2025/12/27", "ND168NB", "KRI_3286437", "3000"], ["2026/01/29", "ND168NB", "KRI_3491322", "500"], ["2026/06/17", "XO168NB", "019ED5E81CF961FD96CC3FD7734372A8", "500"], ["2026/06/30", "RF168NB", "KRL_91079", "500"], ["2026/07/11", "YD168NB", "KRK_886328", "500"]], "内::码上纯代收": [], "内::码上小额卡卡": [["2026/06/17", "LS168G", "L20260617115724789204349", "500"], ["2026/06/26", "XY168G", "L20260626100107984826983", "500"]], "内::新宝支付宝": [["2024/12/23", "SH", "KRD_4291485", "1000"], ["2025/09/24", "JD", "KRG_1666656", "1000"], ["2026/05/23", "ND168NB", "KRI_4005163", "500"], ["2026/05/27", "LS168NB", "L20260527000640156044393", "1003"]], "外::新宝支付宝": [["2026/06/06", "", "L20260606081017503279631", "501"]], "内::新宝支付宝(小额)": [], "内::新宝银联": [], "内::和奕": [["2025/12/28", "HS168B", "KRJ_1148483", "500"], ["2026/03/24", "XY168B", "L20260324221132135908836", "5507"]], "外::和奕": [["4/3", "", "OTC088624040317840", "4500"], ["4/24", "", "OTC097324042328576", "3300"]], "内::和奕支付宝": [], "内::全通支付宝": [["2024/11/19", "SH1688A", "KRD_4226575", "1025"], ["2025/07/07", "SH168B", "KRD_4642458", "2035"]], "外::全通支付宝": [["2024/10/13", "", "L20241013181209378753431", "2900"], ["2025/06/26", "", "250626110749R004P082d", "9550"]], "内::GOSM支付宝": [["", "mt", "KRE_4887677", "1028"]], "内::GOSM微信": [["2025/12/01", "", "KRI_3090091", "510"]], "内::乐支付宝": [["2024/12/12", "SH", "KRD_4280079", "1385"]], "内::onepay数字人民币": [], "内::onepay银联扫码": [], "内::onepay小荷包": [], "内::宝诺原生支付宝H5": [], "内::HCPAY": [], "内::XPAY支付宝": []};
   var state = load();
   var view = "home";          // "home" | "topic"
   var curTopic = null;        // topic id
@@ -1310,6 +1356,8 @@
     if(typeof tf.secIdx!=="number") tf.secIdx=0;
     if(!tf.sheetCache) tf.sheetCache={ at:Date.now(), seed:false, rows:[] };
     // 預設：每次登入（載入）鎖定所有內容避免誤改；但「加减」保持解鎖以維持自動更新
+    if(!d.ledger || typeof d.ledger!=="object"){ d.ledger={}; }
+    Object.keys(LEDGER_SEED).forEach(function(k){ if(!(k in d.ledger)) d.ledger[k]=LEDGER_SEED[k].map(function(r){return r.slice();}); });
     d.topics.forEach(function(t){ t.locked = (t.name!=="加减"); });
     return d;
   }
@@ -1412,6 +1460,67 @@
   }
   function openSearch(){ $("searchModal").classList.add("show"); var i=$("gsInput"); i.value=""; renderSearch(""); setTimeout(function(){ i.focus(); },50); }
   function closeSearch(){ $("searchModal").classList.remove("show"); }
+
+  /* ---------- 三方明細帳（點加减的三方打開） ---------- */
+  var lgKey=null;
+  function lgRows(){ if(!state.ledger) state.ledger={}; if(!state.ledger[lgKey]) state.ledger[lgKey]=[]; return state.ledger[lgKey]; }
+  function lgNum(v){ var n=Number(String(v).replace(/,/g,"").trim()); return isFinite(n)?n:0; }
+  function openLedger(side, name){
+    lgKey=side+"::"+name;
+    $("lgTitle").textContent=(side==="内"?"內部":"外部")+" · "+name+"　明細";
+    renderLedger();
+    $("ledgerModal").classList.add("show");
+  }
+  function closeLedger(){ $("ledgerModal").classList.remove("show"); lgKey=null; renderHome(); }
+  function lgUpdateSum(){
+    var rows=lgRows(), tot=0; rows.forEach(function(r){ tot+=lgNum(r[3]); });
+    var txt=(tot===0?"0":tot.toLocaleString("en-US",{maximumFractionDigits:2}));
+    $("lgSum").innerHTML="共 "+rows.length+" 筆 · 合計金額 <b>"+txt+"</b>";
+  }
+  function renderLedger(){
+    var rows=lgRows(), b=$("lgBody"), h="";
+    if(!rows.length){ h='<tr class="lg-empty"><td colspan="6">還沒有資料，按下方「＋ 新增一筆」開始 key</td></tr>'; }
+    rows.forEach(function(r,i){
+      while(r.length<4) r.push("");
+      h+='<tr class="lg-row" draggable="true" data-i="'+i+'">'
+       + '<td class="lg-grip" title="拖曳排序">⠿</td>'
+       + '<td><input data-i="'+i+'" data-f="0" value="'+esc(r[0])+'" placeholder="2025/01/01"></td>'
+       + '<td><input data-i="'+i+'" data-f="1" value="'+esc(r[1])+'" placeholder="商户"></td>'
+       + '<td><input data-i="'+i+'" data-f="2" value="'+esc(r[2])+'" placeholder="单号"></td>'
+       + '<td class="lg-amt"><input data-i="'+i+'" data-f="3" value="'+esc(r[3])+'" placeholder="0"></td>'
+       + '<td><button type="button" class="lg-del" data-i="'+i+'" title="刪除">✕</button></td></tr>';
+    });
+    b.innerHTML=h;
+    lgUpdateSum();
+  }
+  // 事件：編輯 / 刪除 / 新增 / 拖曳（在啟動綁定區呼叫）
+  function bindLedger(){
+    var body=$("lgBody");
+    body.addEventListener("input", function(e){
+      var el=e.target; if(el.tagName!=="INPUT") return;
+      var i=parseInt(el.getAttribute("data-i"),10), f=parseInt(el.getAttribute("data-f"),10);
+      var rows=lgRows(); if(rows[i]){ while(rows[i].length<4) rows[i].push(""); rows[i][f]=el.value; save(); if(f===3) lgUpdateSum(); }
+    });
+    body.addEventListener("click", function(e){
+      var d=e.target.closest ? e.target.closest(".lg-del") : null;
+      if(d){ var i=parseInt(d.getAttribute("data-i"),10); var rows=lgRows(); if(i>=0&&i<rows.length){ rows.splice(i,1); save(); renderLedger(); } }
+    });
+    $("lgAdd").addEventListener("click", function(){ lgRows().push(["","","",""]); save(); renderLedger();
+      var ins=body.querySelectorAll(".lg-row"); if(ins.length){ var last=ins[ins.length-1].querySelector("input"); if(last) last.focus(); } });
+    $("lgClose").addEventListener("click", closeLedger);
+    $("ledgerModal").addEventListener("click", function(e){ if(e.target===this) closeLedger(); });
+    // 拖曳排序
+    var dragI=null;
+    body.addEventListener("dragstart", function(e){ var tr=e.target.closest(".lg-row"); if(!tr) return; dragI=parseInt(tr.getAttribute("data-i"),10); tr.classList.add("dragging"); });
+    body.addEventListener("dragend", function(e){ var tr=e.target.closest(".lg-row"); if(tr) tr.classList.remove("dragging"); Array.prototype.forEach.call(body.querySelectorAll(".drag-over"),function(x){x.classList.remove("drag-over");}); });
+    body.addEventListener("dragover", function(e){ e.preventDefault(); var tr=e.target.closest(".lg-row"); if(!tr) return; Array.prototype.forEach.call(body.querySelectorAll(".drag-over"),function(x){x.classList.remove("drag-over");}); tr.classList.add("drag-over"); });
+    body.addEventListener("drop", function(e){
+      e.preventDefault(); var tr=e.target.closest(".lg-row"); if(!tr||dragI==null) return;
+      var to=parseInt(tr.getAttribute("data-i"),10), rows=lgRows();
+      if(dragI!==to && dragI>=0 && to>=0){ var m=rows.splice(dragI,1)[0]; rows.splice(to,0,m); save(); renderLedger(); }
+      dragI=null;
+    });
+  }
   var cardEdit=null; // { topicId, rowIdx }
   var CARD_LONG_EDIT=/规则|規則|冻结|風控|风控|對接记录|对接记录|创群时间|说明|說明|费率|費率|回U/;
   function openCardEdit(t, rowIdx){
@@ -1965,6 +2074,7 @@
     var __cn=(topicById(curTopic)||{}).name;
     var isNotes = (__cn === NOTES_NAME || __cn === IMPORTANT_NAME || __cn === QA_NAME || __cn === GUIZHANG_NAME || __cn === THREE_NAME);
     var isQA = (__cn === QA_NAME);
+    var isAdd = (__cn === PINNED_FIRST_NAME);
     var locked = !!(topicById(curTopic)||{}).locked;
     // 隱藏完全空白的欄（表頭與全部資料皆空）
     var showCol=[];
@@ -2055,7 +2165,7 @@
     for(var ri=0;ri<shown.length;ri++){
       var rowObj=shown[ri], rowArr=rowObj.row, ridx=rowObj.idx;
       var subH = (!isSwitch && isSubHeader(rowArr));
-      h+='<tr'+(subH?' class="subhead"':'')+'>';
+      h+='<tr'+(subH?' class="subhead"':'')+((isNotes&&!locked&&!subH)?' draggable="true" data-ridx="'+ridx+'" class="drag-row"':'')+'>';
       for(var k2=0;k2<cols;k2++){
         if(!showCol[k2]) continue;
         var __m = mergeMap ? mergeMap[ri+"_"+k2] : null;
@@ -2164,6 +2274,10 @@
             if(/备[注註]|范例|範例/.test(String(head[k2]!=null?head[k2]:""))){
               h+='<td class="note-cell"><span class="note-txt">'+esc(val)+'</span>'
                + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
+            }else if(isAdd && (k2===0||k2===2) && sv!==""){
+              var _side=(k2===0?"内":"外"), _key=_side+"::"+val;
+              var _n=(state.ledger&&state.ledger[_key])?state.ledger[_key].length:0;
+              h+='<td class="name-cell"><button type="button" class="ledger-link" data-side="'+_side+'" data-name="'+esc(val)+'">'+esc(val)+' <span class="lg-badge">'+(_n?_n:"＋")+'</span></button></td>';
             }else{
               h+='<td class="name-cell"><span class="name-chip">'+esc(val)+'</span>'
                + '<button type="button" class="copy-btn" data-copy="'+esc(val)+'" title="複製">📋</button></td>';
@@ -2182,7 +2296,7 @@
           h+='<td>'+esc(val)+'</td>';
         }
       }
-      if(isNotes && !locked){ h+='<td class="del-c"><button type="button" class="row-del" data-r="'+ridx+'" title="刪除這筆">✕</button></td>'; }
+      if(isNotes && !locked){ h+='<td class="del-c"><span class="row-grip" title="拖曳排序">⠿</span><button type="button" class="row-del" data-r="'+ridx+'" title="刪除這筆">✕</button></td>'; }
       h+='</tr>';
     }
     h+='</tbody></table></div>';
@@ -2276,6 +2390,8 @@
     if(isSel) colorCellSel(el);
   }
   function onWrapClick(e){
+    var lgl=e.target.closest ? e.target.closest(".ledger-link") : null;
+    if(lgl){ e.stopPropagation(); openLedger(lgl.getAttribute("data-side"), lgl.getAttribute("data-name")); return; }
     var tg=e.target.closest ? e.target.closest(".st-toggle") : null;
     if(tg){
       e.stopPropagation();
@@ -2525,6 +2641,20 @@
     if(wrapC){
       wrapC.addEventListener("click", onWrapClick);
       wrapC.addEventListener("change", onCellChange);
+      (function(){
+        var dr=null;
+        wrapC.addEventListener("dragstart", function(e){ var tr=e.target.closest?e.target.closest("tr.drag-row"):null; if(!tr) return; dr=parseInt(tr.getAttribute("data-ridx"),10); tr.classList.add("dragging"); });
+        wrapC.addEventListener("dragend", function(e){ var tr=e.target.closest?e.target.closest("tr.drag-row"):null; if(tr) tr.classList.remove("dragging"); Array.prototype.forEach.call(wrapC.querySelectorAll(".drag-over"),function(x){x.classList.remove("drag-over");}); });
+        wrapC.addEventListener("dragover", function(e){ if(dr==null) return; e.preventDefault(); var tr=e.target.closest?e.target.closest("tr.drag-row"):null; if(!tr) return; Array.prototype.forEach.call(wrapC.querySelectorAll(".drag-over"),function(x){x.classList.remove("drag-over");}); tr.classList.add("drag-over"); });
+        wrapC.addEventListener("drop", function(e){
+          if(dr==null) return; e.preventDefault();
+          var tr=e.target.closest?e.target.closest("tr.drag-row"):null; if(!tr) return;
+          var to=parseInt(tr.getAttribute("data-ridx"),10);
+          var tp=topicById(curTopic), rs=tp?rowsOf(tp):null;
+          if(rs && dr!==to && dr>0 && to>0 && dr<rs.length && to<rs.length){ var m=rs.splice(dr,1)[0]; rs.splice(to,0,m); touchRows(tp); save(); renderHome(); }
+          dr=null;
+        });
+      })();
       wrapC.addEventListener("keydown", function(e){
         if(e.target && e.target.classList && e.target.classList.contains("anno-edit")){
           if(e.key==="Escape"){ annoEditing=null; var _c=e.target.closest?e.target.closest("td"):null; if(e.target.parentNode) e.target.parentNode.removeChild(e.target); if(_c) _c.classList.remove("editing"); }
@@ -3074,6 +3204,7 @@
   $("topicCancel").addEventListener("click", closeTopicModal);
   $("topicSave").addEventListener("click", saveTopic);
   $("delTopicBtn").addEventListener("click", delTopic);
+  bindLedger();
   $("searchBtn").addEventListener("click", openSearch);
   $("gsClose").addEventListener("click", closeSearch);
   $("gsInput").addEventListener("input", function(){ renderSearch(this.value); });
