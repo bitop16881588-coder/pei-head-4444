@@ -690,7 +690,11 @@
   .lg-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
   .lg-table th{position:sticky;top:0;background:var(--accent-soft);padding:9px 8px;font-weight:800;text-align:left;z-index:1;white-space:nowrap}
   .lg-table td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:middle}
-  .lg-h-grip,.lg-h-del{width:34px}.lg-h-amt{text-align:right}
+  .lg-h-grip,.lg-h-del{width:34px}.lg-h-amt{text-align:right}.lg-h-rate{width:96px}
+  .lg-rate input{text-align:right;font-variant-numeric:tabular-nums}
+  .lg-h-calc{width:110px;text-align:right}
+  td.lg-calc{text-align:right;padding-right:10px;background:#fffaf6}
+  .lg-calc-v{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent)}
   .lg-table input{width:100%;border:1px solid transparent;background:transparent;font:inherit;font-size:13.5px;
     padding:6px 7px;border-radius:8px;color:var(--ink)}
   .lg-table input:focus{outline:none;border-color:var(--accent);background:#fff}
@@ -834,7 +838,7 @@
     </div>
     <div class="lg-wrap">
       <table class="lg-table">
-        <thead><tr><th class="lg-h-grip"></th><th>日期</th><th>商户</th><th>单号</th><th class="lg-h-amt">金额</th><th class="lg-h-del"></th></tr></thead>
+        <thead><tr><th class="lg-h-grip"></th><th>日期</th><th>商户</th><th>单号</th><th class="lg-h-amt">金额</th><th class="lg-h-rate">汇率</th><th class="lg-h-calc">换算</th><th class="lg-h-del"></th></tr></thead>
         <tbody id="lgBody"></tbody>
       </table>
     </div>
@@ -1472,22 +1476,32 @@
     $("ledgerModal").classList.add("show");
   }
   function closeLedger(){ $("ledgerModal").classList.remove("show"); lgKey=null; renderHome(); }
+  function lgRowCalc(r){ var a=lgNum(r[3]), x=lgNum(r[4]); if(!r[4]||String(r[4]).trim()===""||x===0) return null; return a-(a*x); }
+  function lgFmt(n){ return n.toLocaleString("en-US",{maximumFractionDigits:2}); }
+  function lgUpdateRowCalc(i){
+    var rows=lgRows(); var el=document.querySelector('.lg-calc-v[data-i="'+i+'"]'); if(!el) return;
+    var v=lgRowCalc(rows[i]); el.textContent=(v==null?"—":lgFmt(v));
+  }
   function lgUpdateSum(){
-    var rows=lgRows(), tot=0; rows.forEach(function(r){ tot+=lgNum(r[3]); });
-    var txt=(tot===0?"0":tot.toLocaleString("en-US",{maximumFractionDigits:2}));
-    $("lgSum").innerHTML="共 "+rows.length+" 筆 · 合計金額 <b>"+txt+"</b>";
+    var rows=lgRows(), tot=0, totc=0, hasRate=false;
+    rows.forEach(function(r){ tot+=lgNum(r[3]); var c=lgRowCalc(r); if(c!=null){ totc+=c; hasRate=true; } });
+    var html="共 "+rows.length+" 筆 · 合計金額 <b>"+lgFmt(tot)+"</b>";
+    if(hasRate) html+=" · 合計换算 <b>"+lgFmt(totc)+"</b>";
+    $("lgSum").innerHTML=html;
   }
   function renderLedger(){
     var rows=lgRows(), b=$("lgBody"), h="";
-    if(!rows.length){ h='<tr class="lg-empty"><td colspan="6">還沒有資料，按下方「＋ 新增一筆」開始 key</td></tr>'; }
+    if(!rows.length){ h='<tr class="lg-empty"><td colspan="8">還沒有資料，按下方「＋ 新增一筆」開始 key</td></tr>'; }
     rows.forEach(function(r,i){
-      while(r.length<4) r.push("");
+      while(r.length<5) r.push("");
       h+='<tr class="lg-row" draggable="true" data-i="'+i+'">'
        + '<td class="lg-grip" title="拖曳排序">⠿</td>'
        + '<td><input data-i="'+i+'" data-f="0" value="'+esc(r[0])+'" placeholder="2025/01/01"></td>'
        + '<td><input data-i="'+i+'" data-f="1" value="'+esc(r[1])+'" placeholder="商户"></td>'
        + '<td><input data-i="'+i+'" data-f="2" value="'+esc(r[2])+'" placeholder="单号"></td>'
        + '<td class="lg-amt"><input data-i="'+i+'" data-f="3" value="'+esc(r[3])+'" placeholder="0"></td>'
+       + '<td class="lg-rate"><input data-i="'+i+'" data-f="4" value="'+esc(r[4])+'" placeholder="汇率"></td>'
+       + '<td class="lg-calc"><span class="lg-calc-v" data-i="'+i+'">'+(function(){var v=lgRowCalc(r);return v==null?"—":lgFmt(v);})()+'</span></td>'
        + '<td><button type="button" class="lg-del" data-i="'+i+'" title="刪除">✕</button></td></tr>';
     });
     b.innerHTML=h;
@@ -1499,13 +1513,13 @@
     body.addEventListener("input", function(e){
       var el=e.target; if(el.tagName!=="INPUT") return;
       var i=parseInt(el.getAttribute("data-i"),10), f=parseInt(el.getAttribute("data-f"),10);
-      var rows=lgRows(); if(rows[i]){ while(rows[i].length<4) rows[i].push(""); rows[i][f]=el.value; save(); if(f===3) lgUpdateSum(); }
+      var rows=lgRows(); if(rows[i]){ while(rows[i].length<5) rows[i].push(""); rows[i][f]=el.value; save(); if(f===3||f===4){ lgUpdateRowCalc(i); lgUpdateSum(); } }
     });
     body.addEventListener("click", function(e){
       var d=e.target.closest ? e.target.closest(".lg-del") : null;
       if(d){ var i=parseInt(d.getAttribute("data-i"),10); var rows=lgRows(); if(i>=0&&i<rows.length){ rows.splice(i,1); save(); renderLedger(); } }
     });
-    $("lgAdd").addEventListener("click", function(){ lgRows().push(["","","",""]); save(); renderLedger();
+    $("lgAdd").addEventListener("click", function(){ lgRows().push(["","","","",""]); save(); renderLedger();
       var ins=body.querySelectorAll(".lg-row"); if(ins.length){ var last=ins[ins.length-1].querySelector("input"); if(last) last.focus(); } });
     $("lgClose").addEventListener("click", closeLedger);
     $("ledgerModal").addEventListener("click", function(e){ if(e.target===this) closeLedger(); });
